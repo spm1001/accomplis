@@ -62,6 +62,15 @@ todoist version  # Show version and commit info
 
 ## As a Claude Code Skill
 
+<!-- GENERATED:SKILLS:START -->
+1 skill, tabled from `skills/*/SKILL.md` frontmatter by [render-skills.py](https://github.com/spm1001/batterie-de-savoir/blob/main/scripts/render-skills.py) — regenerate from this repo's root with
+`uv run --script ../batterie-de-savoir/scripts/render-skills.py .`
+
+| Skill | What it does |
+|-------|--------------|
+| `/coaching` | MANDATORY gate BEFORE any Todoist operation — orchestrates GTD semantics the CLI alone can't provide (outcomes are sections not tasks, workspace vs personal filtering, horizon alignment) |
+<!-- GENERATED:SKILLS:END -->
+
 When installed, Claude gains:
 - **GTD vocabulary** — outcomes, areas, waiting-fors
 - **Structure awareness** — outcomes as sections, 3-tier ontology
