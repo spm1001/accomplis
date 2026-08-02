@@ -7,35 +7,35 @@ description: >
   detection. Triggers on 'clean up outcomes', 'team priorities', 'is this a good outcome',
   'weekly review', 'am I overcommitting', 'check my patterns', 'should I take this on',
   'scope creep', 'reorder my queue'. (user)
-allowed-tools: ["Bash(todoist:*)", Read, AskUserQuestion]
+allowed-tools: ["Bash(accomplis:*)", Read, AskUserQuestion]
 ---
 
 # Todoist GTD
 
 ## Setup (do this for the user, don't ask)
 
-**Be proactive.** If todoist isn't working, fix it — don't list commands for the user to run.
+**Be proactive.** If accomplis isn't working, fix it — don't list commands for the user to run.
 
 ### 1. Install the CLI (if missing)
 
 Install from the **source repo** — the marketplace cache ships no `pyproject.toml`, so a cache/`CLAUDE_PLUGIN_ROOT` install fails ("does not appear to be a Python project"):
 ```bash
 # Local clone if present, else git+https:
-[ -f ~/repos/spm1001/todoist-gtd/pyproject.toml ] \
-  && uv tool install ~/repos/spm1001/todoist-gtd --force --reinstall --no-cache \
-  || uv tool install 'todoist-gtd @ git+https://github.com/spm1001/todoist-gtd' --force --reinstall --no-cache
+[ -f ~/repos/spm1001/accomplis/pyproject.toml ] \
+  && uv tool install ~/repos/spm1001/accomplis --force --reinstall --no-cache \
+  || uv tool install 'accomplis @ git+https://github.com/spm1001/accomplis' --force --reinstall --no-cache
 export PATH="$HOME/.local/bin:$PATH"
 ```
 
-The SessionStart hook (`ensure-todoist.sh`) already runs this logic automatically — you usually don't need to install by hand.
+The SessionStart hook (`ensure-accomplis.sh`) already runs this logic automatically — you usually don't need to install by hand.
 
 ### 2. Authenticate
 
 ```bash
-todoist doctor
+accomplis doctor
 ```
 
-If doctor reports no token, run `todoist auth` for setup instructions, then `todoist auth --token TOKEN` to store it (Keychain on Mac, plugin data dir on Linux). No manual env vars or shell profile edits needed.
+If doctor reports no token, run `accomplis auth` for setup instructions, then `accomplis auth --token TOKEN` to store it (Keychain on Mac, plugin data dir on Linux). No manual env vars or shell profile edits needed.
 
 **NEVER echo the API token back to the user.** The token is a secret.
 
@@ -67,16 +67,16 @@ MCP-free Todoist integration using the official Python SDK (v4, httpx-based). Ad
 
 ```bash
 # Who am I?
-todoist whoami
+accomplis whoami
 
 # What projects exist?
-todoist projects
+accomplis projects
 
 # What's the structure of a specific project?
-todoist sections --project "Project Name"
+accomplis sections --project "Project Name"
 
 # Who's on a shared project?
-todoist collaborators --project-id "<id>"
+accomplis collaborators --project-id "<id>"
 ```
 
 ### The Universal GTD Pattern in Todoist
@@ -130,16 +130,16 @@ The CLI auto-detects workspace (team) projects and filters accordingly:
 
 ```bash
 # Your tasks on a shared project (default)
-todoist tasks --project "Shared Project"
+accomplis tasks --project "Shared Project"
 
 # Triage unassigned tasks
-todoist tasks --project "Shared Project" --unassigned
+accomplis tasks --project "Shared Project" --unassigned
 
 # Everyone's tasks
-todoist tasks --project "Shared Project" --team
+accomplis tasks --project "Shared Project" --team
 
 # Specific person
-todoist tasks --project "Shared Project" --assignee "Full Name"
+accomplis tasks --project "Shared Project" --assignee "Full Name"
 ```
 
 ### GTD Contexts Are Usually Projects
@@ -147,8 +147,8 @@ todoist tasks --project "Shared Project" --assignee "Full Name"
 **GTD contexts (Waiting For, Work, Someday…) are usually PROJECTS, not labels.** Query with `--project`, not `--label` (unless the user genuinely uses labels).
 
 ```bash
-todoist tasks --project "@Wait"           # if their contexts use an @ prefix
-todoist tasks --project "& Waiting For"   # if they use an & prefix, or plain names
+accomplis tasks --project "@Wait"           # if their contexts use an @ prefix
+accomplis tasks --project "& Waiting For"   # if they use an & prefix, or plain names
 ```
 
 **The prefix is a per-user convention, not a rule** — `@`, `&`, emoji, or none at all. Even one user's convention changes over time. Discover it fresh: list all projects and look for the short, action-situation names (Work, Home, Waiting, Someday, Agendas) clustered under a common prefix.
@@ -232,11 +232,11 @@ When creating or coaching on outcomes, use this framework:
 **All commands return JSON.** Key patterns:
 
 ```bash
-todoist sections --project "Outcomes Project"           # Outcomes (sections!)
-todoist tasks --section-id "<outcome-id>"               # Tasks under an outcome
-todoist tasks --project "@Wait" --older-than 30d        # Stale waiting-fors
-todoist filter "assigned to: me"                        # Your tasks across projects
-todoist tasks --project "@Work" --include-section-name  # Tasks with section context
+accomplis sections --project "Outcomes Project"           # Outcomes (sections!)
+accomplis tasks --section-id "<outcome-id>"               # Tasks under an outcome
+accomplis tasks --project "@Wait" --older-than 30d        # Stale waiting-fors
+accomplis filter "assigned to: me"                        # Your tasks across projects
+accomplis tasks --project "@Work" --include-section-name  # Tasks with section context
 ```
 
 **Critical:** `tasks` and `task` return complete objects with `.comments[]` inline. `filter` returns tasks only (no comments — filters can span projects).
@@ -256,11 +256,11 @@ todoist tasks --project "@Work" --include-section-name  # Tasks with section con
 
 ```bash
 # In a sections-as-outcomes project:
-todoist add-section "Built team capacity through documentation" \
+accomplis add-section "Built team capacity through documentation" \
   --project "OUTCOMES_PROJECT"
 
 # In a tasks-as-outcomes project (sections are status lanes):
-todoist add "Built team capacity through documentation" \
+accomplis add "Built team capacity through documentation" \
   --project "OUTCOMES_PROJECT"
 ```
 
@@ -352,7 +352,7 @@ Surface these concerns when analysing data:
 
 If the user has a Claude-specific inbox project:
 
-1. Query it: `todoist tasks --project "@Claude"` (or whatever it's named)
+1. Query it: `accomplis tasks --project "@Claude"` (or whatever it's named)
 2. For each item: check `.comments[]` for context
 3. Decide: do now, move, or complete
 
@@ -364,30 +364,30 @@ See [references/PATTERNS.md](references/PATTERNS.md#inbox-triage-workflow) for t
 
 | Query | CLI Command |
 |-------|-------------|
-| All projects | `todoist projects` |
-| Current user | `todoist whoami` |
-| Outcomes | `todoist sections --project "OUTCOMES_PROJECT"` |
-| Tasks under outcome | `todoist tasks --section-id "<outcome-id>"` |
-| Tasks with section names | `todoist tasks --project "X" --include-section-name` |
-| Person's work | `todoist tasks --project "X" --assignee "Name"` |
-| Unassigned (triage) | `todoist tasks --project "X" --unassigned` |
-| Stale waiting-fors | `todoist tasks --project "@Wait" --older-than 30d` |
-| Today's tasks | `todoist filter "today"` |
+| All projects | `accomplis projects` |
+| Current user | `accomplis whoami` |
+| Outcomes | `accomplis sections --project "OUTCOMES_PROJECT"` |
+| Tasks under outcome | `accomplis tasks --section-id "<outcome-id>"` |
+| Tasks with section names | `accomplis tasks --project "X" --include-section-name` |
+| Person's work | `accomplis tasks --project "X" --assignee "Name"` |
+| Unassigned (triage) | `accomplis tasks --project "X" --unassigned` |
+| Stale waiting-fors | `accomplis tasks --project "@Wait" --older-than 30d` |
+| Today's tasks | `accomplis filter "today"` |
 
 ### Key Write Operations
 
 | Operation | CLI Command |
 |-----------|-------------|
-| Create outcome | `todoist add-section "name" --project "OUTCOMES_PROJECT"` |
-| Create task | `todoist add "content" --project "PROJECT" --section "SECTION"` |
-| Complete task | `todoist done "<task-id>"` |
-| Rename task | `todoist update "<task-id>" --content "new name"` |
-| Move to project | `todoist update "<task-id>" --project "PROJECT"` |
-| Move to section | `todoist update "<task-id>" --section "SECTION"` |
-| Move OUT of section | `todoist update "<task-id>" --no-section` |
-| Arrange a queue | `todoist reorder <id1> <id2> <id3>` (order = sequence given) |
+| Create outcome | `accomplis add-section "name" --project "OUTCOMES_PROJECT"` |
+| Create task | `accomplis add "content" --project "PROJECT" --section "SECTION"` |
+| Complete task | `accomplis done "<task-id>"` |
+| Rename task | `accomplis update "<task-id>" --content "new name"` |
+| Move to project | `accomplis update "<task-id>" --project "PROJECT"` |
+| Move to section | `accomplis update "<task-id>" --section "SECTION"` |
+| Move OUT of section | `accomplis update "<task-id>" --no-section` |
+| Arrange a queue | `accomplis reorder <id1> <id2> <id3>` (order = sequence given) |
 
-**Note:** Replace `OUTCOMES_PROJECT`, `PROJECT`, `SECTION` with the user's actual project/section names discovered via `todoist projects` and `todoist sections`.
+**Note:** Replace `OUTCOMES_PROJECT`, `PROJECT`, `SECTION` with the user's actual project/section names discovered via `accomplis projects` and `accomplis sections`.
 
 ## Remember
 

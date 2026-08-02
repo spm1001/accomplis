@@ -15,9 +15,9 @@ Safety features:
 - Rate limit handling with retry
 
 Usage:
-    todoist-flatten "Project Name"              # Dry-run
-    todoist-flatten "Project Name" --execute    # Apply changes (creates backup)
-    todoist-flatten --restore path/to/backup.json  # Restore from backup
+    accomplis-flatten "Project Name"              # Dry-run
+    accomplis-flatten "Project Name" --execute    # Apply changes (creates backup)
+    accomplis-flatten --restore path/to/backup.json  # Restore from backup
 """
 
 import argparse
@@ -28,7 +28,7 @@ from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 
-from todoist_gtd.common import (
+from accomplis.common import (
     get_api,
     collect_paginated,
     to_dict,
@@ -118,7 +118,7 @@ def save_backup(project_name: str, tasks_dict: dict,
     Returns path to backup file.
     """
     # Create backup directory
-    backup_dir = Path.home() / ".claude" / "backups" / "todoist"
+    backup_dir = Path.home() / ".claude" / "backups" / "accomplis"
     backup_dir.mkdir(parents=True, exist_ok=True)
 
     # Generate filename with timestamp
@@ -149,7 +149,7 @@ def save_backup(project_name: str, tasks_dict: dict,
 
 def list_backups() -> list[Path]:
     """List available backup files, newest first."""
-    backup_dir = Path.home() / ".claude" / "backups" / "todoist"
+    backup_dir = Path.home() / ".claude" / "backups" / "accomplis"
     if not backup_dir.exists():
         return []
     return sorted(backup_dir.glob("flatten-*.json"), reverse=True)
@@ -272,7 +272,7 @@ def cmd_list_backups():
     """List available backup files."""
     backups = list_backups()
     if not backups:
-        print("No backup files found in ~/.claude/backups/todoist/")
+        print("No backup files found in ~/.claude/backups/accomplis/")
         return
 
     print("Available backups (newest first):")
@@ -292,7 +292,7 @@ def cmd_list_backups():
     if len(backups) > 10:
         print(f"  ... and {len(backups) - 10} more")
     print()
-    print(f"Backup directory: ~/.claude/backups/todoist/")
+    print(f"Backup directory: ~/.claude/backups/accomplis/")
 
 
 def cmd_flatten(args):
@@ -473,7 +473,7 @@ Examples:
     %(prog)s --restore backup.json --execute # Restore descriptions
     %(prog)s --list-backups                  # List available backups
 
-Backup files are saved to ~/.claude/backups/todoist/
+Backup files are saved to ~/.claude/backups/accomplis/
 Use --project-id when the project name might change between dry-run and execute.
 Use --delete-subtasks for permanent removal (default: complete, which preserves history).
 """

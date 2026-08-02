@@ -3,7 +3,7 @@
 Todoist CLI - MCP-free interface using official Python SDK.
 
 Usage:
-    todoist <command> [options]
+    accomplis <command> [options]
 
 Commands:
     auth                Show setup instructions
@@ -31,7 +31,7 @@ Commands:
     whoami              Show current authenticated user
 
 Authentication:
-    Run `todoist auth` to set up (opens Todoist settings, prompts for token).
+    Run `accomplis auth` to set up (opens Todoist settings, prompts for token).
     Token is stored in macOS Keychain or ~/.todoist-token.
     Or set TODOIST_API_KEY environment variable directly.
 """
@@ -43,7 +43,7 @@ import sys
 from datetime import datetime, timedelta
 from typing import Any
 
-from todoist_gtd.common import (
+from accomplis.common import (
     get_api,
     get_current_user,
     collect_paginated,
@@ -528,7 +528,7 @@ def cmd_get_collaborators(args):
 
 def cmd_auth(args):
     """Authenticate with Todoist."""
-    from todoist_gtd.auth import get_auth_status, store_api_token, print_setup_instructions
+    from accomplis.auth import get_auth_status, store_api_token, print_setup_instructions
 
     if args.status:
         status = get_auth_status()
@@ -563,7 +563,7 @@ def cmd_doctor(args):
             if detail:
                 print(f"    → {detail}")
 
-    print("Checking todoist-gtd setup...\n")
+    print("Checking accomplis setup...\n")
 
     # Python version (pyproject.toml requires-python is the enforcement point)
     print("[Python]")
@@ -585,21 +585,21 @@ def cmd_doctor(args):
 
     # Installation
     print("\n[Installation]")
-    todoist_shim = shutil.which("todoist")
+    accomplis_shim = shutil.which("accomplis")
     check(
-        "todoist on PATH",
-        todoist_shim is not None,
-        "Run: uv tool install <path-to-clone>  (or 'todoist-gtd @ git+https://github.com/spm1001/todoist-gtd')" if not todoist_shim else ""
+        "accomplis on PATH",
+        accomplis_shim is not None,
+        "Run: uv tool install <path-to-clone>  (or 'accomplis @ git+https://github.com/spm1001/accomplis')" if not accomplis_shim else ""
     )
-    if todoist_shim:
+    if accomplis_shim:
         check(
-            f"installed at {todoist_shim}",
+            f"installed at {accomplis_shim}",
             True,
         )
 
     # Auth
     print("\n[Authentication]")
-    from todoist_gtd.auth import get_auth_status
+    from accomplis.auth import get_auth_status
     status = get_auth_status()
     check(
         "Todoist authenticated",
@@ -680,11 +680,11 @@ def cmd_version(args):
 
     # Get package version
     try:
-        ver = pkg_version("todoist-gtd")
+        ver = pkg_version("accomplis")
     except PackageNotFoundError:
         ver = "dev"
 
-    print(f"todoist-gtd {ver}")
+    print(f"accomplis {ver}")
     print(f"Python {sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}")
 
 
@@ -695,7 +695,7 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument('--version', '-V', action='version',
-                        version=f'todoist-gtd {pkg_version("todoist-gtd")}')
+                        version=f'accomplis {pkg_version("accomplis")}')
     subparsers = parser.add_subparsers(dest="command", help="Command to run")
 
     # Auth command
@@ -859,7 +859,7 @@ def main():
             # Token expired/revoked (401 Unauthorized)
             if "401" in str(e) or "unauthorized" in error_str:
                 print("Error: Token expired or revoked.", file=sys.stderr)
-                print("Run 'todoist auth' to re-authenticate.", file=sys.stderr)
+                print("Run 'accomplis auth' to re-authenticate.", file=sys.stderr)
                 sys.exit(1)
 
             # Re-raise unknown errors

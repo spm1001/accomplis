@@ -33,7 +33,7 @@ Process and file from cleanup zones (downloads, desktop, drive inboxes — check
 - **Clarify before organizing** — read content, extract actions, THEN move files
 
 ### Phase 2: Outcomes Review
-This skill (todoist-gtd):
+This skill (accomplis):
 - Check outcome health (stale, orphaned, activity-language)
 - Review against Team Priorities
 - Target: 3-5 active Tier 2 outcomes
@@ -53,7 +53,7 @@ When processing @Claude or any inbox project:
 
 ```
 1. Get all items (comments included inline)
-   todoist tasks --project "@Claude"
+   accomplis tasks --project "@Claude"
 
 2. For EACH item, check .comments[] then decide:
    - track: File in the work tracker, complete task
@@ -133,7 +133,7 @@ When extracting actions from meeting notes, documents, or other sources:
 
 3. **User edits** — Fix names (Claude guessed a first name, user knows the full one), delete stale items, clarify vague actions
 
-4. **Process edited file** — Parse and add to Todoist, one `todoist add` per line, routed to the user's discovered context projects (waiting-fors to their waiting project, agenda items to their agenda project, and so on)
+4. **Process edited file** — Parse and add to Todoist, one `accomplis add` per line, routed to the user's discovered context projects (waiting-fors to their waiting project, agenda items to their agenda project, and so on)
 
 ### Why This Works
 

@@ -5,20 +5,20 @@ Todoist authentication module.
 Stores API tokens portably: env var, macOS Keychain, or file (~/.todoist-token).
 
 Usage:
-    from todoist_gtd.auth import get_auth_status
+    from accomplis.auth import get_auth_status
 
     # Check current status
     status = get_auth_status()
 
 CLI:
-    todoist auth --token TOKEN   # Store a personal API token
-    todoist auth --status        # Check authentication status
-    todoist auth                 # Print setup instructions
+    accomplis auth --token TOKEN   # Store a personal API token
+    accomplis auth --status        # Check authentication status
+    accomplis auth                 # Print setup instructions
 """
 
 import sys
 
-from todoist_gtd.token_store import get_token_quiet, store_token
+from accomplis.token_store import get_token_quiet, store_token
 
 TODOIST_TOKEN_URL = "https://app.todoist.com/app/settings/integrations/developer"
 
@@ -36,12 +36,12 @@ def store_api_token(token: str) -> bool:
     # Quick validation: Todoist API tokens are 40-char hex strings
     if len(token) != 40 or not all(c in "0123456789abcdef" for c in token):
         print("Warning: Token doesn't look like a Todoist API token (expected 40 hex chars).", file=sys.stderr)
-        print("Storing anyway -- todoist doctor will verify it works.\n", file=sys.stderr)
+        print("Storing anyway -- accomplis doctor will verify it works.\n", file=sys.stderr)
 
     if not store_token(token):
         return False
 
-    print("Token stored. Run `todoist doctor` to verify.")
+    print("Token stored. Run `accomplis doctor` to verify.")
     return True
 
 
@@ -58,7 +58,7 @@ def get_auth_status() -> dict:
     if not token:
         return {
             "authenticated": False,
-            "message": "Not authenticated. Run `todoist auth --token TOKEN` to set up."
+            "message": "Not authenticated. Run `accomplis auth --token TOKEN` to set up."
         }
 
     # Try to verify token works by making a simple API call
@@ -76,7 +76,7 @@ def get_auth_status() -> dict:
         if "401" in error_str or "unauthorized" in error_str:
             return {
                 "authenticated": False,
-                "message": "Token revoked or expired. Run `todoist auth --token TOKEN` to re-authenticate."
+                "message": "Token revoked or expired. Run `accomplis auth --token TOKEN` to re-authenticate."
             }
         # Network error or other issue - assume still authenticated
         return {
@@ -96,7 +96,7 @@ def print_setup_instructions():
     print("2. Scroll to the bottom and copy your API token.")
     print()
     print("3. Run:")
-    print("   todoist auth --token YOUR_TOKEN_HERE")
+    print("   accomplis auth --token YOUR_TOKEN_HERE")
     print()
     print("The token will be stored in macOS Keychain (if available)")
     print("or in a file with restricted permissions.")

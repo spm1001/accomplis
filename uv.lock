@@ -3,6 +3,28 @@ revision = 3
 requires-python = ">=3.11"
 
 [[package]]
+name = "accomplis"
+source = { editable = "." }
+dependencies = [
+    { name = "httpx" },
+    { name = "todoist-api-python" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "pytest" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "httpx", specifier = ">=0.27" },
+    { name = "todoist-api-python", specifier = ">=4.0.0" },
+]
+
+[package.metadata.requires-dev]
+dev = [{ name = "pytest", specifier = ">=8" }]
+
+[[package]]
 name = "annotated-types"
 version = "0.7.0"
 source = { registry = "https://pypi.org/simple" }
@@ -165,28 +187,6 @@ sdist = { url = "https://files.pythonhosted.org/packages/0c/43/a3dcb178937026abb
 wheels = [
     { url = "https://files.pythonhosted.org/packages/f0/43/7728ffb2118934a0b356316adfd0bc564400b1844ca804c24ecab2be424e/todoist_api_python-4.0.0-py3-none-any.whl", hash = "sha256:6b435f5fbf48da2faf7cb846a0de3b6719a33461958512d2adb4546494c195de", size = 28296, upload-time = "2026-03-25T10:11:12.091Z" },
 ]
-
-[[package]]
-name = "todoist-gtd"
-source = { editable = "." }
-dependencies = [
-    { name = "httpx" },
-    { name = "todoist-api-python" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "pytest" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "httpx", specifier = ">=0.27" },
-    { name = "todoist-api-python", specifier = ">=4.0.0" },
-]
-
-[package.metadata.requires-dev]
-dev = [{ name = "pytest", specifier = ">=8" }]
 
 [[package]]
 name = "typing-extensions"

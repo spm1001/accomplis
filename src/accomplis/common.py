@@ -39,7 +39,7 @@ def get_api():
             print("\nInstall with: pip install todoist-api-python", file=sys.stderr)
             sys.exit(1)
 
-    from todoist_gtd.token_store import get_token
+    from accomplis.token_store import get_token
     import httpx
 
     token = get_token()
@@ -58,7 +58,7 @@ def get_current_user() -> dict:
     Calls GET /api/v1/user directly (not wrapped by the SDK).
     Returns dict with id, full_name, email, and other user fields.
     """
-    from todoist_gtd.token_store import get_token
+    from accomplis.token_store import get_token
     import httpx
 
     token = get_token()
@@ -113,7 +113,7 @@ def resolve_project(api, name_or_id: str) -> str:
     print(f"Available projects: {', '.join(available[:10])}", file=sys.stderr)
     if len(available) > 10:
         print(f"  ...and {len(available) - 10} more", file=sys.stderr)
-    print("\n⚠️  STOP: Load the todoist-gtd skill before using this CLI!", file=sys.stderr)
+    print("\n⚠️  STOP: Load the accomplis skill before using this CLI!", file=sys.stderr)
     sys.exit(1)
 
 
@@ -164,7 +164,7 @@ def resolve_section(api, project_id: str, name_or_id: str) -> str:
         print(f"Available sections: {', '.join(available)}", file=sys.stderr)
     else:
         print("This project has no sections.", file=sys.stderr)
-    print("\n⚠️  STOP: Load the todoist-gtd skill before using this CLI!", file=sys.stderr)
+    print("\n⚠️  STOP: Load the accomplis skill before using this CLI!", file=sys.stderr)
     sys.exit(1)
 
 

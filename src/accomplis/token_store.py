@@ -1,14 +1,18 @@
 #!/usr/bin/env python3
 """
-Portable secrets management for Todoist CLI.
+Portable secrets management for the accomplis CLI (Todoist API token).
 
 Supports multiple backends:
 1. Environment variable (TODOIST_API_KEY) - works everywhere
 2. macOS Keychain - native Mac support
 3. File-based fallback (plugin data dir, or ~/.todoist-token legacy) - last resort
 
+The env var and Keychain service keep their todoist-* names deliberately:
+they identify the SERVICE credential, not the tool, and renaming them would
+force a pointless credential migration on every machine.
+
 Usage:
-    from todoist_gtd.token_store import get_token, store_token
+    from accomplis.token_store import get_token, store_token
 
     token = get_token()  # Returns token or exits with error
     store_token(token)   # Stores using best available backend
@@ -25,9 +29,14 @@ KEYCHAIN_SERVICE = "todoist-api-key"
 
 # Plugin data directory — version-stable, survives plugin cache upgrades.
 # Claude Code creates ~/.claude/plugins/data/{name}-{marketplace}/ automatically.
-_PLUGIN_DATA_DIR = Path.home() / ".claude" / "plugins" / "data" / "todoist-gtd-batterie"
-# Pre-2026-06-10-cutover marketplace name — kept only as a migration source.
-_OLD_PLUGIN_DATA_DIR = Path.home() / ".claude" / "plugins" / "data" / "todoist-gtd-batterie-de-savoir"
+_PLUGIN_DATA_DIR = Path.home() / ".claude" / "plugins" / "data" / "accomplis-batterie"
+# Older names, newest first — each rung kept only as a migration source:
+# pre-rename plugin name (to 2026-08-02), then pre-cutover marketplace name
+# (to 2026-06-10).
+_OLD_PLUGIN_DATA_DIRS = (
+    Path.home() / ".claude" / "plugins" / "data" / "todoist-gtd-batterie",
+    Path.home() / ".claude" / "plugins" / "data" / "todoist-gtd-batterie-de-savoir",
+)
 _LEGACY_TOKEN_FILE = Path.home() / ".todoist-token"
 
 # Prefer plugin data dir (version-stable) over legacy home file.
@@ -79,10 +88,10 @@ def _get_from_file() -> Optional[str]:
         return TOKEN_FILE.read_text().strip()
     if TOKEN_FILE == _LEGACY_TOKEN_FILE:
         return None
-    # Migrate on first read: pre-cutover plugin-data dir first, then the
+    # Migrate on first read: older plugin-data dirs newest-first, then the
     # legacy home file. Originals are left in place (cheap, and another
     # machine's older install may still read them).
-    for old in (_OLD_PLUGIN_DATA_DIR / "token", _LEGACY_TOKEN_FILE):
+    for old in (*(d / "token" for d in _OLD_PLUGIN_DATA_DIRS), _LEGACY_TOKEN_FILE):
         if old.exists():
             token = old.read_text().strip()
             if token:
@@ -166,7 +175,7 @@ def get_token() -> str:
     if _has_keychain():
         print('  macOS Keychain: security add-generic-password -a "$USER" -s "todoist-api-key" -w "TOKEN"', file=sys.stderr)
     print('  Environment var: export TODOIST_API_KEY="TOKEN" in ~/.bashrc or ~/.secrets', file=sys.stderr)
-    print("\nOr run `todoist auth` for setup instructions.", file=sys.stderr)
+    print("\nOr run `accomplis auth` for setup instructions.", file=sys.stderr)
     sys.exit(1)
 
 

@@ -1,4 +1,4 @@
-# todoist-gtd
+# accomplis
 
 > **Status:** Beta — actively developed
 > **Works with:** Claude Code, standalone CLI
@@ -15,15 +15,15 @@ Install via the batterie marketplace:
 
 ```bash
 claude plugin marketplace add spm1001/batterie
-/plugin install todoist-gtd@batterie
+/plugin install accomplis@batterie
 ```
 
 Then set up authentication and verify:
 
 ```bash
-todoist auth                    # Prints setup instructions
-todoist auth --token YOUR_TOKEN # Store your API token
-todoist doctor                  # Verify everything works
+accomplis auth                    # Prints setup instructions
+accomplis auth --token YOUR_TOKEN # Store your API token
+accomplis doctor                  # Verify everything works
 ```
 
 ## Authentication
@@ -31,7 +31,7 @@ todoist doctor                  # Verify everything works
 Get your API token from [Todoist developer settings](https://app.todoist.com/app/settings/integrations/developer), then store it:
 
 ```bash
-todoist auth --token YOUR_API_TOKEN
+accomplis auth --token YOUR_API_TOKEN
 ```
 
 Token is stored in macOS Keychain (if available) or in a file with restricted permissions on Linux.
@@ -40,28 +40,28 @@ Token is stored in macOS Keychain (if available) or in a file with restricted pe
 
 ```bash
 # List projects
-todoist projects
+accomplis projects
 
 # Tasks in a project
-todoist tasks --project "@Work"
+accomplis tasks --project "@Work"
 
 # Filter syntax (same as Todoist app)
-todoist filter "today"
-todoist filter "assigned to: Alex & @waiting-for"
+accomplis filter "today"
+accomplis filter "assigned to: Alex & @waiting-for"
 
 # Complete a task
-todoist done <task-id>
+accomplis done <task-id>
 
 # Add a task
-todoist add "Review proposal" --project "@Work" --section "Now"
+accomplis add "Review proposal" --project "@Work" --section "Now"
 
 # Move a task out of its section; arrange a queue
-todoist update <task-id> --no-section
-todoist reorder <id1> <id2> <id3>   # order becomes the sequence given
+accomplis update <task-id> --no-section
+accomplis reorder <id1> <id2> <id3>   # order becomes the sequence given
 
 # Utility commands
-todoist doctor   # Check setup and diagnose issues
-todoist version  # Show version and commit info
+accomplis doctor   # Check setup and diagnose issues
+accomplis version  # Show version and commit info
 ```
 
 ## As a Claude Code Skill
@@ -89,7 +89,7 @@ Claude triggers this skill on phrases like:
 
 ## GTD Structure Discovered
 
-The skill doesn't assume your project names or layout — it discovers them (`todoist projects`, `todoist sections`) and matches what it finds. The patterns it looks for:
+The skill doesn't assume your project names or layout — it discovers them (`accomplis projects`, `accomplis sections`) and matches what it finds. The patterns it looks for:
 
 | Concept | Common Todoist Implementation |
 |---------|------------------------------|
@@ -103,13 +103,13 @@ No configuration needed — the coaching adapts to your structure, not the other
 ## Files
 
 ```
-todoist-gtd/
-├── src/todoist_gtd/      # Python package
-│   ├── cli.py            # Main CLI (todoist command)
+accomplis/
+├── src/accomplis/      # Python package
+│   ├── cli.py            # Main CLI (accomplis command)
 │   ├── auth.py           # Token-based authentication
 │   ├── token_store.py    # Keychain integration
 │   ├── common.py         # Shared utilities
-│   └── flatten.py        # Subtask flattening (todoist-flatten)
+│   └── flatten.py        # Subtask flattening (accomplis-flatten)
 ├── skills/coaching/      # Claude Code skill
 │   ├── SKILL.md          # Skill definition
 │   └── references/       # GTD vocabulary, patterns, coaching
@@ -122,7 +122,7 @@ todoist-gtd/
 ### Auth Failures
 
 **"Token revoked or expired"**
-- Re-run `todoist auth --token TOKEN` with a fresh token from Todoist settings.
+- Re-run `accomplis auth --token TOKEN` with a fresh token from Todoist settings.
 
 **"Keychain is locked"** (macOS)
 - Unlock your macOS Keychain (Keychain Access app or `security unlock-keychain`).

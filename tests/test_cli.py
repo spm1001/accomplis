@@ -1,4 +1,4 @@
-"""Tests for todoist-gtd CLI commands."""
+"""Tests for accomplis CLI commands."""
 
 import json
 import sys
@@ -60,10 +60,10 @@ def paginated(*items):
 
 
 class TestGetCurrentUser:
-    @patch("todoist_gtd.token_store.get_token", return_value="test-token")
+    @patch("accomplis.token_store.get_token", return_value="test-token")
     @patch("httpx.get")
     def test_returns_user_dict(self, mock_get, mock_token):
-        from todoist_gtd.common import get_current_user
+        from accomplis.common import get_current_user
 
         mock_response = MagicMock()
         mock_response.json.return_value = {
@@ -85,10 +85,10 @@ class TestGetCurrentUser:
             timeout=30,
         )
 
-    @patch("todoist_gtd.token_store.get_token", return_value="bad-token")
+    @patch("accomplis.token_store.get_token", return_value="bad-token")
     @patch("httpx.get")
     def test_raises_on_401(self, mock_get, mock_token):
-        from todoist_gtd.common import get_current_user
+        from accomplis.common import get_current_user
         import httpx
 
         mock_response = MagicMock()
@@ -105,9 +105,9 @@ class TestGetCurrentUser:
 
 
 class TestWhoami:
-    @patch("todoist_gtd.cli.get_current_user")
+    @patch("accomplis.cli.get_current_user")
     def test_human_output(self, mock_user, capsys):
-        from todoist_gtd.cli import cmd_whoami
+        from accomplis.cli import cmd_whoami
 
         mock_user.return_value = {
             "id": "123",
@@ -123,9 +123,9 @@ class TestWhoami:
         assert "sameer@example.com" in out
         assert "123" in out
 
-    @patch("todoist_gtd.cli.get_current_user")
+    @patch("accomplis.cli.get_current_user")
     def test_json_output(self, mock_user, capsys):
-        from todoist_gtd.cli import cmd_whoami
+        from accomplis.cli import cmd_whoami
 
         mock_user.return_value = {
             "id": "123",
@@ -145,10 +145,10 @@ class TestWhoami:
 
 
 class TestAssigneeEnrichment:
-    @patch("todoist_gtd.cli.get_api")
-    @patch("todoist_gtd.cli.collect_paginated")
+    @patch("accomplis.cli.get_api")
+    @patch("accomplis.cli.collect_paginated")
     def test_assignee_name_resolved_in_task_output(self, mock_collect, mock_api, capsys):
-        from todoist_gtd.cli import cmd_get_task
+        from accomplis.cli import cmd_get_task
 
         task = make_task(assignee_id="456", project_id="p1")
         collabs = [make_collaborator("456", "Lauren Thomas")]
@@ -173,10 +173,10 @@ class TestAssigneeEnrichment:
         out = json.loads(capsys.readouterr().out)
         assert out["assignee_name"] == "Lauren Thomas"
 
-    @patch("todoist_gtd.cli.get_api")
-    @patch("todoist_gtd.cli.collect_paginated")
+    @patch("accomplis.cli.get_api")
+    @patch("accomplis.cli.collect_paginated")
     def test_null_assignee_gives_null_name(self, mock_collect, mock_api, capsys):
-        from todoist_gtd.cli import cmd_get_task
+        from accomplis.cli import cmd_get_task
 
         task = make_task(assignee_id=None, project_id="p1")
 
@@ -201,14 +201,14 @@ class TestAssigneeEnrichment:
 class TestAutoFilter:
     """Workspace projects filter to assigned-to-me; personal projects show all."""
 
-    @patch("todoist_gtd.cli.get_current_user")
-    @patch("todoist_gtd.cli.get_api")
-    @patch("todoist_gtd.cli.collect_paginated")
-    @patch("todoist_gtd.cli.resolve_project_object")
+    @patch("accomplis.cli.get_current_user")
+    @patch("accomplis.cli.get_api")
+    @patch("accomplis.cli.collect_paginated")
+    @patch("accomplis.cli.resolve_project_object")
     def test_workspace_project_filters_to_assigned_only(self, mock_resolve, mock_collect,
                                                          mock_api, mock_user, capsys):
         """Workspace project default: only tasks assigned to me (no unassigned)."""
-        from todoist_gtd.cli import cmd_get_tasks
+        from accomplis.cli import cmd_get_tasks
 
         mock_resolve.return_value = make_project("p1", "MIT Board", workspace_id="ws1")
         mock_user.return_value = {"id": "100", "full_name": "Me"}
@@ -241,14 +241,14 @@ class TestAutoFilter:
         assert "Their task" not in contents
         assert "Unassigned task" not in contents
 
-    @patch("todoist_gtd.cli.get_current_user")
-    @patch("todoist_gtd.cli.get_api")
-    @patch("todoist_gtd.cli.collect_paginated")
-    @patch("todoist_gtd.cli.resolve_project_object")
+    @patch("accomplis.cli.get_current_user")
+    @patch("accomplis.cli.get_api")
+    @patch("accomplis.cli.collect_paginated")
+    @patch("accomplis.cli.resolve_project_object")
     def test_workspace_unassigned_flag_shows_untriaged(self, mock_resolve, mock_collect,
                                                         mock_api, mock_user, capsys):
         """--unassigned on workspace project shows only unassigned tasks."""
-        from todoist_gtd.cli import cmd_get_tasks
+        from accomplis.cli import cmd_get_tasks
 
         mock_resolve.return_value = make_project("p1", "MIT Board", workspace_id="ws1")
         mock_user.return_value = {"id": "100", "full_name": "Me"}
@@ -276,12 +276,12 @@ class TestAutoFilter:
         assert "Unassigned task" in contents
         assert "My task" not in contents
 
-    @patch("todoist_gtd.cli.get_api")
-    @patch("todoist_gtd.cli.collect_paginated")
-    @patch("todoist_gtd.cli.resolve_project_object")
+    @patch("accomplis.cli.get_api")
+    @patch("accomplis.cli.collect_paginated")
+    @patch("accomplis.cli.resolve_project_object")
     def test_team_flag_shows_all(self, mock_resolve, mock_collect, mock_api, capsys):
         """--team bypasses all filtering."""
-        from todoist_gtd.cli import cmd_get_tasks
+        from accomplis.cli import cmd_get_tasks
 
         mock_resolve.return_value = make_project("p1", "MIT Board", workspace_id="ws1")
         mock_api.return_value = MagicMock()
@@ -310,12 +310,12 @@ class TestAutoFilter:
         out = json.loads(capsys.readouterr().out)
         assert len(out) == 2
 
-    @patch("todoist_gtd.cli.get_api")
-    @patch("todoist_gtd.cli.collect_paginated")
-    @patch("todoist_gtd.cli.resolve_project_object")
+    @patch("accomplis.cli.get_api")
+    @patch("accomplis.cli.collect_paginated")
+    @patch("accomplis.cli.resolve_project_object")
     def test_personal_project_no_filter(self, mock_resolve, mock_collect, mock_api, capsys):
         """Personal project (no workspace_id): show all tasks, no filtering."""
-        from todoist_gtd.cli import cmd_get_tasks
+        from accomplis.cli import cmd_get_tasks
 
         mock_resolve.return_value = make_project("p1", "Personal", workspace_id=None)
         mock_api.return_value = MagicMock()
@@ -339,12 +339,12 @@ class TestAutoFilter:
         out = json.loads(capsys.readouterr().out)
         assert len(out) == 2
 
-    @patch("todoist_gtd.cli.get_api")
-    @patch("todoist_gtd.cli.collect_paginated")
-    @patch("todoist_gtd.cli.resolve_project_object")
+    @patch("accomplis.cli.get_api")
+    @patch("accomplis.cli.collect_paginated")
+    @patch("accomplis.cli.resolve_project_object")
     def test_personal_with_collaborators_no_filter(self, mock_resolve, mock_collect, mock_api, capsys):
         """Personal project WITH collaborators but no workspace_id: show all tasks."""
-        from todoist_gtd.cli import cmd_get_tasks
+        from accomplis.cli import cmd_get_tasks
 
         mock_resolve.return_value = make_project("p1", "At Work", workspace_id=None)
         mock_api.return_value = MagicMock()
@@ -380,10 +380,10 @@ class TestAutoFilter:
 
 
 class TestCommentGuardRemoval:
-    @patch("todoist_gtd.cli.get_api")
-    @patch("todoist_gtd.cli.collect_paginated")
+    @patch("accomplis.cli.get_api")
+    @patch("accomplis.cli.collect_paginated")
     def test_comments_fetched_even_with_zero_comment_count(self, mock_collect, mock_api, capsys):
-        from todoist_gtd.cli import cmd_get_task
+        from accomplis.cli import cmd_get_task
 
         task = make_task(comment_count=0)
         attachment_comment = make_comment(
@@ -422,10 +422,10 @@ def make_update_args(**overrides):
 
 
 class TestNoSection:
-    @patch("todoist_gtd.cli.get_api")
+    @patch("accomplis.cli.get_api")
     def test_no_section_moves_to_project_root(self, mock_api, capsys):
         """--no-section alone: move_task targets the task's own project."""
-        from todoist_gtd.cli import cmd_update_task
+        from accomplis.cli import cmd_update_task
 
         task = make_task("t1", "In a section", project_id="p1", section_id="s1")
         api = MagicMock()
@@ -437,9 +437,9 @@ class TestNoSection:
         api.move_task.assert_called_once_with("t1", project_id="p1")
         api.update_task.assert_not_called()
 
-    @patch("todoist_gtd.cli.get_api")
+    @patch("accomplis.cli.get_api")
     def test_no_section_conflicts_with_section(self, mock_api, capsys):
-        from todoist_gtd.cli import cmd_update_task
+        from accomplis.cli import cmd_update_task
 
         with pytest.raises(SystemExit):
             cmd_update_task(make_update_args(no_section=True, section="Now"))
@@ -447,9 +447,9 @@ class TestNoSection:
 
 
 class TestOrder:
-    @patch("todoist_gtd.cli.get_api")
+    @patch("accomplis.cli.get_api")
     def test_order_passed_to_update(self, mock_api, capsys):
-        from todoist_gtd.cli import cmd_update_task
+        from accomplis.cli import cmd_update_task
 
         task = make_task("t1", "Queue item", project_id="p1")
         api = MagicMock()
@@ -463,10 +463,10 @@ class TestOrder:
 
 
 class TestReorder:
-    @patch("todoist_gtd.cli.api_call_with_retry", side_effect=lambda f, *a, **k: f(*a, **k))
-    @patch("todoist_gtd.cli.get_api")
+    @patch("accomplis.cli.api_call_with_retry", side_effect=lambda f, *a, **k: f(*a, **k))
+    @patch("accomplis.cli.get_api")
     def test_reorder_assigns_sequential_positions(self, mock_api, mock_retry, capsys):
-        from todoist_gtd.cli import cmd_reorder
+        from accomplis.cli import cmd_reorder
 
         api = MagicMock()
         mock_api.return_value = api

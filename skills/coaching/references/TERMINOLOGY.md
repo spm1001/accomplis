@@ -13,7 +13,7 @@ The Todoist concept of a project - a container for tasks and sections.
 - A work context project (may contain Now/Later sections)
 - A kanban-style delivery project (To Do/Doing/Done sections)
 
-**CLI:** `todoist projects`, `--project` / `--project-id` flags
+**CLI:** `accomplis projects`, `--project` / `--project-id` flags
 
 ### 2. GTD Project (Tier 3 - Multi-Step Outcome)
 
