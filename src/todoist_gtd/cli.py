@@ -24,7 +24,8 @@ Commands:
     uncomplete ID       Uncomplete/reopen a task
     completed           List completed tasks (--since, --until, --project)
     add CONTENT         Create a new task (--project, --section for placement)
-    update ID           Update/move task (--content, --project, --section, etc.)
+    update ID           Update/move task (--content, --project, --section, --no-section, --order, etc.)
+    reorder ID [ID...]  Set task order to the sequence given (first = top)
     comments            Get comments standalone (rarely needed)
     collaborators       Get project collaborators (requires --project-id)
     whoami              Show current authenticated user
@@ -38,7 +39,6 @@ Authentication:
 import argparse
 import json
 import re
-import subprocess
 import sys
 from datetime import datetime, timedelta
 from typing import Any
@@ -53,6 +53,7 @@ from todoist_gtd.common import (
     resolve_section,
     resolve_assignee,
     handle_task_not_found,
+    api_call_with_retry,
     DEFAULT_TIMEOUT,
 )
 
@@ -341,6 +342,20 @@ def cmd_update_task(args):
     if args.project:
         project_id = resolve_project(api, args.project)
 
+    # --no-section: move to the project root. The API has no "clear section"
+    # field — the only way out of a section is a move targeting project_id.
+    if args.no_section:
+        if args.section or args.section_id:
+            print("Error: --no-section cannot be combined with --section/--section-id", file=sys.stderr)
+            sys.exit(1)
+        if not project_id:
+            # Staying in the current project, just leaving the section
+            try:
+                task = api.get_task(args.id)
+            except Exception as e:
+                handle_task_not_found(e, args.id)
+            project_id = task.project_id
+
     # Resolve section name to ID if provided
     section_id = args.section_id
     if args.section:
@@ -392,6 +407,10 @@ def cmd_update_task(args):
         update_kwargs['labels'] = args.labels.split(",")
     if assignee_id is not None:
         update_kwargs['assignee_id'] = assignee_id
+    # Order goes in update_kwargs, which runs AFTER any move — a move resets
+    # the task's order to 1, so setting it in the same call would be undone.
+    if args.order is not None:
+        update_kwargs['order'] = args.order
 
     move_kwargs = {}
     if project_id:
@@ -438,6 +457,26 @@ def cmd_update_task(args):
     except Exception as e:
         handle_task_not_found(e, args.id)
     output_json(task)
+
+
+def cmd_reorder(args):
+    """Set task order to the sequence given (first = position 1)."""
+    api = get_api()
+
+    results = []
+    for position, task_id in enumerate(args.ids, start=1):
+        try:
+            api_call_with_retry(api.update_task, task_id, order=position)
+        except Exception as e:
+            # Report what landed before the failure, then the standard error
+            if results:
+                print(f"Reordered {len(results)} of {len(args.ids)} tasks before the failure:", file=sys.stderr)
+                for r in results:
+                    print(f"  {r['order']}. {r['task_id']}", file=sys.stderr)
+            handle_task_not_found(e, task_id)
+        results.append({"task_id": task_id, "order": position})
+
+    print(json.dumps({"success": True, "reordered": results}, indent=2))
 
 
 def cmd_add_section(args):
@@ -526,13 +565,13 @@ def cmd_doctor(args):
 
     print("Checking todoist-gtd setup...\n")
 
-    # Python version
+    # Python version (pyproject.toml requires-python is the enforcement point)
     print("[Python]")
     py_version = sys.version_info
     check(
         f"Python {py_version.major}.{py_version.minor}.{py_version.micro}",
-        py_version >= (3, 9),
-        "Requires Python 3.9+" if py_version < (3, 9) else ""
+        py_version >= (3, 11),
+        "Requires Python 3.11+" if py_version < (3, 11) else ""
     )
 
     # Dependencies
@@ -550,7 +589,7 @@ def cmd_doctor(args):
     check(
         "todoist on PATH",
         todoist_shim is not None,
-        "Run: uv tool install ~/Repos/todoist-gtd" if not todoist_shim else ""
+        "Run: uv tool install <path-to-clone>  (or 'todoist-gtd @ git+https://github.com/spm1001/todoist-gtd')" if not todoist_shim else ""
     )
     if todoist_shim:
         check(
@@ -573,7 +612,7 @@ def cmd_doctor(args):
         print("\n[Network]")
         try:
             api = get_api()
-            list(api.get_projects())[:1]  # Just fetch first page
+            next(iter(api.get_projects()), None)  # First page only
             check("API connection", True)
         except Exception as e:
             check("API connection", False, str(e)[:60])
@@ -724,10 +763,15 @@ def main():
     p.add_argument("--project", help="Move to project by name (e.g., '@Ping')")
     p.add_argument("--section-id", help="Move to section ID")
     p.add_argument("--section", help="Move to section by name (e.g., 'Now')")
+    p.add_argument("--no-section", action="store_true", help="Move task out of its section to the project root")
+    p.add_argument("--order", type=int, help="Position among siblings (1 = top). Applied after any move (moves reset order to 1)")
     p.add_argument("--labels", help="New comma-separated labels (replaces existing)")
     p.add_argument("--priority", type=int, choices=[1, 2, 3, 4], help="Priority (1=normal, 4=urgent)")
+    p.add_argument("--assignee", help="Reassign to collaborator by name")
     p.add_argument("--due", help="Due date in natural language")
-    p.add_argument("--assignee", help="Reassign to collaborator by name (e.g., 'Lauren Thomas')")
+
+    p = subparsers.add_parser("reorder", help="Set task order to the sequence given (first = top)")
+    p.add_argument("ids", nargs="+", help="Task IDs in desired order. Unlisted siblings keep their old order and may interleave — list every task in the section for a full arrangement")
 
     p = subparsers.add_parser("comments", help="Get comments")
     p.add_argument("--task-id", help="Task ID")
@@ -780,6 +824,7 @@ def main():
         "completed": cmd_get_completed,
         "add": cmd_add_task,
         "update": cmd_update_task,
+        "reorder": cmd_reorder,
         "add-project": cmd_add_project,
         "update-project": cmd_update_project,
         "add-section": cmd_add_section,

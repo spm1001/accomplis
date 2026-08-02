@@ -17,7 +17,6 @@ CLI:
 """
 
 import sys
-from typing import Optional
 
 from todoist_gtd.token_store import get_token_quiet, store_token
 
@@ -66,8 +65,8 @@ def get_auth_status() -> dict:
     try:
         from todoist_api_python.api import TodoistAPI
         api = TodoistAPI(token)
-        # This will fail if token is revoked
-        list(api.get_projects())
+        # This will fail if token is revoked (first page is enough to verify)
+        next(iter(api.get_projects()), None)
         return {
             "authenticated": True,
             "message": "Authenticated with Todoist."

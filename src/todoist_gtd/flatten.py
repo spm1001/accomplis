@@ -32,7 +32,7 @@ from todoist_gtd.common import (
     get_api,
     collect_paginated,
     to_dict,
-    resolve_project_with_name,
+    resolve_project_object,
     api_call_with_retry,
     RATE_LIMIT_DELAY,
 )
@@ -306,7 +306,8 @@ def cmd_flatten(args):
         projects = collect_paginated(api.get_projects())
         project_name = next((p.name for p in projects if p.id == project_id), project_id)
     else:
-        project_id, project_name = resolve_project_with_name(api, args.project)
+        project = resolve_project_object(api, args.project)
+        project_id, project_name = project.id, project.name
 
     # Fetch all tasks in project
     print(f"Fetching tasks from '{project_name}'...")

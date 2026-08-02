@@ -2,6 +2,23 @@
 
 All notable changes to todoist-gtd.
 
+## [2026-08-02] — review + field-report pass (ships with next suite bump)
+
+### Fixed
+- **`todoist-flatten` crashed on launch since 2026-03-30**: commit dc9f928 renamed `resolve_project_with_name` → `resolve_project_object` in common.py but flatten.py kept importing the old name. Four months of green CI never noticed because nothing imported flatten — `tests/test_imports.py` now smoke-imports every module and entry point.
+- **Version-stable token storage never engaged** (tgt-kobale): the plugin-data gate pointed at the pre-cutover dir name `todoist-gtd-batterie-de-savoir`, which Claude Code stopped creating at the 2026-06-10 cutover, so storage always fell back to `~/.todoist-token`. Now `todoist-gtd-batterie`, with first-read migration from both older locations, test-backed (`tests/test_token_store.py`).
+- SKILL.md's weekly-review summary contradicted GTD_METHODOLOGY.md — realigned to Peake's ordering (Get Current → Get Clear → Get Creative).
+
+### Added (tgt-hiredu — first heavy live use surfaced these)
+- `todoist update --no-section` — move a task out of its section to the project root.
+- `todoist update --order N` and `todoist reorder ID [ID...]` — queue arrangement; `reorder` assigns positions 1..N in the sequence given. Verified live: a move resets order to 1, so order is applied after any move.
+- CLI_REFERENCE: "Moving, Sections, and Ordering" section, and a data-model note that `created_at` carries the API's `added_at` (there is no `added_at` key in output — the field report's "added_at is null" was jq minting null for a missing key).
+
+### Changed
+- Skill teaches structure **discovery over assertion**: outcomes may be sections OR tasks (read the section names to tell), context-project prefixes are per-user convention (`@`, `&`, none), not a rule.
+- References genericised for the public marketplace: real team outcomes replaced with generic examples, stale MCP-era references removed, obsolete "arc" tracker vocabulary replaced, Sublime/macOS-specific editor loop generalised, personal "freedom score" metric replaced with a generic headroom check (completes the 2026-03-30 decision).
+- Python floor aligned on 3.11 everywhere (pyproject already enforced it; doctor and CLAUDE.md claimed 3.9). `doctor` and `auth --status` fetch one page instead of all projects. Removed unused imports, vestigial requirements.txt, and a reference to a CONTRIBUTING.md that doesn't exist.
+
 ## [0.4.8] - 2026-06-20
 
 ### Docs

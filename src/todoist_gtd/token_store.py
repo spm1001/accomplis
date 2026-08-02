@@ -24,8 +24,10 @@ from typing import Optional
 KEYCHAIN_SERVICE = "todoist-api-key"
 
 # Plugin data directory — version-stable, survives plugin cache upgrades.
-# Claude Code creates ~/.claude/plugins/data/{name}-{publisher}/ automatically.
-_PLUGIN_DATA_DIR = Path.home() / ".claude" / "plugins" / "data" / "todoist-gtd-batterie-de-savoir"
+# Claude Code creates ~/.claude/plugins/data/{name}-{marketplace}/ automatically.
+_PLUGIN_DATA_DIR = Path.home() / ".claude" / "plugins" / "data" / "todoist-gtd-batterie"
+# Pre-2026-06-10-cutover marketplace name — kept only as a migration source.
+_OLD_PLUGIN_DATA_DIR = Path.home() / ".claude" / "plugins" / "data" / "todoist-gtd-batterie-de-savoir"
 _LEGACY_TOKEN_FILE = Path.home() / ".todoist-token"
 
 # Prefer plugin data dir (version-stable) over legacy home file.
@@ -72,17 +74,22 @@ def _get_from_keychain() -> Optional[str]:
 
 
 def _get_from_file() -> Optional[str]:
-    """Get token from file, migrating from legacy location if needed."""
+    """Get token from file, migrating from older locations if needed."""
     if TOKEN_FILE.exists():
         return TOKEN_FILE.read_text().strip()
-    # Migrate from ~/.todoist-token to plugin data dir on first read
-    if TOKEN_FILE != _LEGACY_TOKEN_FILE and _LEGACY_TOKEN_FILE.exists():
-        token = _LEGACY_TOKEN_FILE.read_text().strip()
-        if token:
-            TOKEN_FILE.parent.mkdir(parents=True, exist_ok=True)
-            TOKEN_FILE.write_text(token + "\n")
-            TOKEN_FILE.chmod(0o600)
-            return token
+    if TOKEN_FILE == _LEGACY_TOKEN_FILE:
+        return None
+    # Migrate on first read: pre-cutover plugin-data dir first, then the
+    # legacy home file. Originals are left in place (cheap, and another
+    # machine's older install may still read them).
+    for old in (_OLD_PLUGIN_DATA_DIR / "token", _LEGACY_TOKEN_FILE):
+        if old.exists():
+            token = old.read_text().strip()
+            if token:
+                TOKEN_FILE.parent.mkdir(parents=True, exist_ok=True)
+                TOKEN_FILE.write_text(token + "\n")
+                TOKEN_FILE.chmod(0o600)
+                return token
     return None
 
 

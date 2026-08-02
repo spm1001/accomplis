@@ -405,3 +405,79 @@ class TestCommentGuardRemoval:
         out = json.loads(capsys.readouterr().out)
         assert len(out["comments"]) == 1
         assert out["comments"][0]["attachment"]["file_name"] == "report.pdf"
+
+
+# --- update: --no-section, --order; reorder ---
+
+
+def make_update_args(**overrides):
+    """Args namespace for cmd_update_task with all flags defaulted off."""
+    defaults = dict(
+        id="t1", content=None, description=None, project_id=None, project=None,
+        section_id=None, section=None, no_section=False, order=None,
+        labels=None, priority=None, due=None, assignee=None,
+    )
+    defaults.update(overrides)
+    return SimpleNamespace(**defaults)
+
+
+class TestNoSection:
+    @patch("todoist_gtd.cli.get_api")
+    def test_no_section_moves_to_project_root(self, mock_api, capsys):
+        """--no-section alone: move_task targets the task's own project."""
+        from todoist_gtd.cli import cmd_update_task
+
+        task = make_task("t1", "In a section", project_id="p1", section_id="s1")
+        api = MagicMock()
+        mock_api.return_value = api
+        api.get_task.return_value = task
+
+        cmd_update_task(make_update_args(no_section=True))
+
+        api.move_task.assert_called_once_with("t1", project_id="p1")
+        api.update_task.assert_not_called()
+
+    @patch("todoist_gtd.cli.get_api")
+    def test_no_section_conflicts_with_section(self, mock_api, capsys):
+        from todoist_gtd.cli import cmd_update_task
+
+        with pytest.raises(SystemExit):
+            cmd_update_task(make_update_args(no_section=True, section="Now"))
+        assert "--no-section" in capsys.readouterr().err
+
+
+class TestOrder:
+    @patch("todoist_gtd.cli.get_api")
+    def test_order_passed_to_update(self, mock_api, capsys):
+        from todoist_gtd.cli import cmd_update_task
+
+        task = make_task("t1", "Queue item", project_id="p1")
+        api = MagicMock()
+        mock_api.return_value = api
+        api.get_task.return_value = task
+
+        cmd_update_task(make_update_args(order=3))
+
+        api.update_task.assert_called_once_with("t1", order=3)
+        api.move_task.assert_not_called()
+
+
+class TestReorder:
+    @patch("todoist_gtd.cli.api_call_with_retry", side_effect=lambda f, *a, **k: f(*a, **k))
+    @patch("todoist_gtd.cli.get_api")
+    def test_reorder_assigns_sequential_positions(self, mock_api, mock_retry, capsys):
+        from todoist_gtd.cli import cmd_reorder
+
+        api = MagicMock()
+        mock_api.return_value = api
+
+        cmd_reorder(SimpleNamespace(ids=["a", "b", "c"]))
+
+        assert api.update_task.call_args_list == [
+            (("a",), {"order": 1}),
+            (("b",), {"order": 2}),
+            (("c",), {"order": 3}),
+        ]
+        out = json.loads(capsys.readouterr().out)
+        assert out["success"] is True
+        assert [r["order"] for r in out["reordered"]] == [1, 2, 3]

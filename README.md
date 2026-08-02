@@ -55,6 +55,10 @@ todoist done <task-id>
 # Add a task
 todoist add "Review proposal" --project "@Work" --section "Now"
 
+# Move a task out of its section; arrange a queue
+todoist update <task-id> --no-section
+todoist reorder <id1> <id2> <id3>   # order becomes the sequence given
+
 # Utility commands
 todoist doctor   # Check setup and diagnose issues
 todoist version  # Show version and commit info
@@ -68,7 +72,7 @@ todoist version  # Show version and commit info
 
 | Skill | What it does |
 |-------|--------------|
-| `/coaching` | MANDATORY gate BEFORE any Todoist operation — orchestrates GTD semantics the CLI alone can't provide (outcomes are sections not tasks, workspace vs personal filtering, horizon alignment) |
+| `/coaching` | MANDATORY gate BEFORE any Todoist operation — orchestrates GTD semantics the CLI alone can't provide (discovering each user's structure, outcome vs activity language, workspace vs personal filtering, horizon alignment) |
 <!-- GENERATED:SKILLS:END -->
 
 When installed, Claude gains:
@@ -83,18 +87,18 @@ Claude triggers this skill on phrases like:
 - "is this a good outcome?"
 - "weekly review"
 
-## GTD Structure Expected
+## GTD Structure Discovered
 
-This skill assumes a specific Todoist setup:
+The skill doesn't assume your project names or layout — it discovers them (`todoist projects`, `todoist sections`) and matches what it finds. The patterns it looks for:
 
-| Concept | Todoist Implementation |
-|---------|----------------------|
-| **Outcomes** | Sections in "Desired Outcomes Q1" project |
-| **Team Priorities** | Sections in a separate project |
-| **Next Actions** | Tasks under outcome sections |
-| **Waiting For** | `@Wait` project or `waiting-for` label |
+| Concept | Common Todoist Implementation |
+|---------|------------------------------|
+| **Outcomes** | Sections in an outcomes project (or tasks, in some layouts) |
+| **Next Actions** | Tasks under outcomes, or in context projects |
+| **Contexts** | Projects with a naming convention (`@Work`, `& Work`, plain names) |
+| **Waiting For** | A waiting/follow-up project |
 
-Adapt the project names in SKILL.md to match your structure.
+No configuration needed — the coaching adapts to your structure, not the other way round.
 
 ## Files
 
@@ -158,7 +162,6 @@ If you're joining as a contributor:
 When using Claude to contribute:
 - Claude reads CLAUDE.md at session start — conventions are discoverable
 - Issue/PR templates appear at point of action — guidance when you need it
-- See CONTRIBUTING.md for detailed guidelines
 
 ## Security
 
