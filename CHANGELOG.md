@@ -1,6 +1,13 @@
 # Changelog
 
-All notable changes to todoist-gtd.
+All notable changes to accomplis (né todoist-gtd; renamed 2026-08-02 at suite 1.28.0).
+
+## [2026-08-02] — renamed todoist-gtd → accomplis (suite 1.28.0)
+
+- The tool is now **accomplis** (fait accompli — outcomes as achievements): repo `spm1001/accomplis`, plugin `accomplis@batterie`, commands `accomplis` / `accomplis-flatten`.
+- Service names deliberately unchanged — `TODOIST_API_KEY`, the `todoist-api-key` Keychain service, the `todoist-api-python` dep. No re-auth anywhere.
+- Token file migrates itself: `accomplis-batterie` ← `todoist-gtd-batterie` ← `todoist-gtd-batterie-de-savoir` ← `~/.todoist-token` (test-backed).
+- Older entries below use the old names; they record what was true.
 
 ## [2026-08-02] — review + field-report pass (ships with next suite bump)
 
