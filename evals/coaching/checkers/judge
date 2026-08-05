@@ -61,7 +61,7 @@ def main():
                           "metrics": {"judge_score": 0.0}}))
         sys.exit(0)
 
-    prompt = f"""You are grading the response of an AI assistant that was asked to help a user with their task-management system. Grade strictly against the rubric — the rubric states ground truth about the user's system, which you must take as fact.
+    prompt = f"""You are grading the response of an AI assistant that was asked to help a user with their task-management system. Grade strictly against the rubric — the rubric states ground truth about the user's system, which you must take as fact. The rubric is a floor, not a fence: it is NOT exhaustive, so details in the response that go beyond it (other tasks, counts, names, dates) are not fabrication unless they CONTRADICT something the rubric states. Score what the rubric requires; ignore accurate-looking extra colour.
 
 RUBRIC:
 {rubric}
