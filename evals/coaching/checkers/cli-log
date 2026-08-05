@@ -79,9 +79,18 @@ def main():
             return v
         return proj_by_name.get(v.lower())
 
+    def unscoped(call):
+        """An unfiltered tasks/sections call reads every project — it must
+        count as touching each of them (a bare `accomplis tasks` legitimately
+        covers @Wait, the Inbox and the outcomes project in one sweep)."""
+        return (call["cmd"] in ("tasks", "sections")
+                and not any(k in call["flags"] for k in
+                            ("--project", "--project-id", "--section", "--section-id", "--label")))
+
     def touched(project_name, cmds):
         pid = proj_by_name[project_name.lower()]
-        return any(c["cmd"] in cmds and proj_ref(c) == pid for c in calls)
+        return any(c["cmd"] in cmds and (proj_ref(c) == pid or unscoped(c))
+                   for c in calls)
 
     # ── Common metrics ──────────────────────────────────────────────────────
     made_cli_calls = len(calls) > 0
