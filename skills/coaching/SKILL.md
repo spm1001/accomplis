@@ -362,6 +362,9 @@ Surface these concerns when analysing data:
 - Outcome has no tasks -> "Stuck, deprioritized, or needs rescoping?"
 - No outcomes in an area of focus -> "Dormant area — intentional?"
 
+**"Should I take this on?":**
+- Ground the answer in the whole system before advising — one unscoped `accomplis tasks` sweep covers every project, and whatever it surfaces belongs in the answer. Connect what you find by name: the **Inbox** twin (is this ask already half-captured?), the **Someday** neighbour (adjacent parked ambition — its moment, or its competitor), the **outcome** it would or wouldn't advance, and the honest load picture in waiting-fors and actions. Full method: [references/PATTERNS.md](references/PATTERNS.md).
+
 **Staleness:**
 - Outcome unchanged 4+ weeks -> "Stuck, deprioritized, or needs rescoping?"
 
