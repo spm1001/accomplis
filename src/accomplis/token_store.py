@@ -169,13 +169,39 @@ def get_token() -> str:
     if token:
         return token
 
-    # No token found - show platform-appropriate help
-    print("Error: TODOIST_API_KEY not found", file=sys.stderr)
-    print("\nSetup options:", file=sys.stderr)
+    # No token found — name every location actually consulted, as RESOLVED
+    # absolute paths with existence per rung. A diagnostic that names locations
+    # must name resolved paths, never templates: '~' is a lie in any non-login
+    # context, and a tilde in an error message is how a present credential gets
+    # reported as absent (tgt-zanute — a token sitting in another HOME's
+    # ~/.todoist-token was reported as 'not found' with three irrelevant
+    # suggestions, and a day's Todoist reach was written off).
+    env_val = os.environ.get("TODOIST_API_KEY")
+    checked = [
+        "$TODOIST_API_KEY environment variable — "
+        + ("set but empty" if env_val is not None else "unset")
+    ]
+    user = os.environ.get("USER", "")
     if _has_keychain():
-        print('  macOS Keychain: security add-generic-password -a "$USER" -s "todoist-api-key" -w "TOKEN"', file=sys.stderr)
-    print('  Environment var: export TODOIST_API_KEY="TOKEN" in ~/.bashrc or ~/.secrets', file=sys.stderr)
-    print("\nOr run `accomplis auth` for setup instructions.", file=sys.stderr)
+        checked.append(
+            f"macOS Keychain service '{KEYCHAIN_SERVICE}' (account '{user}') — no entry"
+        )
+    # Mirror _get_from_file: TOKEN_FILE always; migration sources only when
+    # TOKEN_FILE is the plugin data dir
+    file_rungs = [TOKEN_FILE]
+    if TOKEN_FILE != _LEGACY_TOKEN_FILE:
+        file_rungs += [d / "token" for d in _OLD_PLUGIN_DATA_DIRS]
+        file_rungs.append(_LEGACY_TOKEN_FILE)
+    for p in file_rungs:
+        state = "exists but empty" if p.exists() else "missing"
+        checked.append(f"{p} — {state}")
+
+    print("Error: no Todoist API token found. Checked, in order:", file=sys.stderr)
+    for i, line in enumerate(checked, 1):
+        print(f"  {i}. {line}", file=sys.stderr)
+    print(f"\n(HOME={Path.home()}, USER={user or '<unset>'})", file=sys.stderr)
+    print("\nFix: `accomplis auth` for setup instructions, or", file=sys.stderr)
+    print("`accomplis auth --token TOKEN` to store one.", file=sys.stderr)
     sys.exit(1)
 
 

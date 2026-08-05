@@ -2,6 +2,21 @@
 
 All notable changes to accomplis (né todoist-gtd; renamed 2026-08-02 at suite 1.28.0).
 
+## [2026-08-05] — coaching-skill deltas from live reviews + routing shard (tgt-nefoja/tgt-vusipa)
+
+### Added
+- **`instructions.md` rules shard** (→ `~/.claude/rules/accomplis.md`, installed by `ensure-accomplis.sh` each session start, mise pattern): any Todoist work → invoke `Skill(coaching)` first, plus the stderr-not-stdout warning. Routing moved to the always-loaded tier because a full DO review once ran end-to-end without the skill's MANDATORY-gate description ever firing — the session entered through a data question.
+- **Coaching content from three live data points** (Stef review 2026-08-04, Sameer review + team meta-review 2026-08-05): two-axis test (outcome-ness × desire, with opposite treatments for phrasing-gap vs dilution), so-that ladder with stop rule, champagne test, observable-behaviour rewrites, your-slice scoping, read-the-arc, mode table (COACHING.md); canon-vs-house distinction and the structure → altitude → language → arc → tier review order (SKILL.md); six structural detectors — sync-mirror check, staleness-in-titles, cross-board delegation audit, team read-across, emergent conventions, same-diseases-every-layer (PATTERNS.md).
+- **`done --note`** — appends a closing note to the description, then completes; one call instead of the update-then-done dance (both live reviews hit this).
+- CLI_REFERENCE paper cuts: info lines go to stderr (`2>&1 | jq` breaks), 5xx-wobble retry + read-back-what-you-touched, `--note` pattern.
+
+### Fixed
+- **`--assignee` now accepts the numeric ids `collaborators` emits** (tgt-husule) — plus email and unique name substring; `update --assignee` unified onto the same resolver (its old substring match silently took the first of several hits, now an error naming candidates).
+- **Token not-found error names the paths it actually checked** (tgt-zanute) — every rung as a resolved absolute path with exists/missing marker, plus HOME and USER; the `~/.secrets` suggestion dropped. A tilde in an error message is how a present credential gets reported as absent.
+- The "3-5 outcomes" target rescoped to the highlighted review tier only — applying it to the whole inventory was a category error the skill previously invited (Allen: 20-30 real projects in flight is healthy).
+- The "gets good client feedback" strong example failed the skill's own observable-behaviour standard — replaced with "client asked to extend the engagement".
+- CLI_REFERENCE token path updated to the post-rename data dir (`accomplis-batterie`).
+
 ## [2026-08-02] — renamed todoist-gtd → accomplis (suite 1.28.0)
 
 - The tool is now **accomplis** (fait accompli — outcomes as achievements): repo `spm1001/accomplis`, plugin `accomplis@batterie`, commands `accomplis` / `accomplis-flatten`.

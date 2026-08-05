@@ -481,3 +481,97 @@ class TestReorder:
         out = json.loads(capsys.readouterr().out)
         assert out["success"] is True
         assert [r["order"] for r in out["reordered"]] == [1, 2, 3]
+
+
+class TestResolveAssignee:
+    """tgt-husule: the ids that `collaborators` emits must round-trip into --assignee."""
+
+    def _api(self):
+        api = MagicMock()
+        api.get_collaborators.return_value = paginated(
+            make_collaborator("55347230", "Alex Chen", "alex@example.com"),
+            make_collaborator("99881122", "Alexandra Smith", "asmith@example.com"),
+        )
+        return api
+
+    def test_numeric_id_round_trips(self):
+        from accomplis.common import resolve_assignee
+        assert resolve_assignee(self._api(), "p1", "55347230") == "55347230"
+
+    def test_email_resolves(self):
+        from accomplis.common import resolve_assignee
+        assert resolve_assignee(self._api(), "p1", "alex@example.com") == "55347230"
+
+    def test_exact_name_resolves(self):
+        from accomplis.common import resolve_assignee
+        assert resolve_assignee(self._api(), "p1", "Alex Chen") == "55347230"
+
+    def test_unique_substring_resolves(self):
+        from accomplis.common import resolve_assignee
+        assert resolve_assignee(self._api(), "p1", "Alexandra") == "99881122"
+
+    def test_ambiguous_substring_errors_naming_candidates(self, capsys):
+        from accomplis.common import resolve_assignee
+        with pytest.raises(SystemExit):
+            resolve_assignee(self._api(), "p1", "Alex")
+        err = capsys.readouterr().err
+        assert "matches several" in err
+        assert "Alex Chen" in err and "Alexandra Smith" in err
+
+    def test_not_found_names_accepted_forms_and_available(self, capsys):
+        from accomplis.common import resolve_assignee
+        with pytest.raises(SystemExit):
+            resolve_assignee(self._api(), "p1", "Nobody")
+        err = capsys.readouterr().err
+        assert "name, email, or id" in err
+        assert "Alex Chen" in err
+
+
+class TestDoneNote:
+    @patch("accomplis.cli.get_api")
+    def test_note_appends_to_description_then_completes(self, mock_api, capsys):
+        from accomplis.cli import cmd_complete_task
+
+        task = make_task("t1", "Thing")
+        task.description = "Existing context"
+        api = MagicMock()
+        mock_api.return_value = api
+        api.get_task.return_value = task
+        api.complete_task.return_value = True
+
+        cmd_complete_task(SimpleNamespace(id="t1", note="Closed: shipped in 1.29"))
+
+        api.update_task.assert_called_once_with(
+            "t1", description="Existing context\n\nClosed: shipped in 1.29"
+        )
+        api.complete_task.assert_called_once_with("t1")
+        out = json.loads(capsys.readouterr().out)
+        assert out["success"] is True
+
+    @patch("accomplis.cli.get_api")
+    def test_note_on_empty_description_stands_alone(self, mock_api, capsys):
+        from accomplis.cli import cmd_complete_task
+
+        task = make_task("t1", "Thing")
+        task.description = ""
+        api = MagicMock()
+        mock_api.return_value = api
+        api.get_task.return_value = task
+        api.complete_task.return_value = True
+
+        cmd_complete_task(SimpleNamespace(id="t1", note="Done note"))
+
+        api.update_task.assert_called_once_with("t1", description="Done note")
+
+    @patch("accomplis.cli.get_api")
+    def test_no_note_skips_description_update(self, mock_api, capsys):
+        from accomplis.cli import cmd_complete_task
+
+        api = MagicMock()
+        mock_api.return_value = api
+        api.complete_task.return_value = True
+
+        cmd_complete_task(SimpleNamespace(id="t1", note=None))
+
+        api.update_task.assert_not_called()
+        api.get_task.assert_not_called()

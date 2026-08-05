@@ -234,8 +234,21 @@ def cmd_filter_tasks(args):
 
 
 def cmd_complete_task(args):
-    """Complete a task."""
+    """Complete a task, optionally recording a closing note first."""
     api = get_api()
+    if getattr(args, "note", None):
+        # Append, never overwrite: an existing description is context the
+        # closing note should sit under, not replace
+        try:
+            task = api.get_task(args.id)
+        except Exception as e:
+            handle_task_not_found(e, args.id)
+        existing = (task.description or "").rstrip()
+        new_desc = f"{existing}\n\n{args.note}" if existing else args.note
+        try:
+            api.update_task(args.id, description=new_desc)
+        except Exception as e:
+            handle_task_not_found(e, args.id)
     try:
         success = api.complete_task(args.id)
     except Exception as e:
@@ -372,7 +385,9 @@ def cmd_update_task(args):
             resolve_project_id = task.project_id
         section_id = resolve_section(api, resolve_project_id, args.section)
 
-    # Resolve assignee name to ID if provided
+    # Resolve assignee to ID if provided — same resolver as `tasks --assignee`,
+    # so name, email, and the numeric id from `collaborators` all work, and an
+    # ambiguous substring errors instead of silently picking the first hit
     assignee_id = None
     if args.assignee:
         # Get task's project to look up collaborators
@@ -380,16 +395,7 @@ def cmd_update_task(args):
             task = api.get_task(args.id)
         except Exception as e:
             handle_task_not_found(e, args.id)
-        collabs = collect_paginated(api.get_collaborators(task.project_id))
-        match = [c for c in collabs if c.name.lower() == args.assignee.lower()]
-        if not match:
-            # Try partial match
-            match = [c for c in collabs if args.assignee.lower() in c.name.lower()]
-        if not match:
-            names = [c.name for c in collabs]
-            print(f"Error: No collaborator matching '{args.assignee}'. Available: {', '.join(names)}", file=sys.stderr)
-            sys.exit(1)
-        assignee_id = match[0].id
+        assignee_id = resolve_assignee(api, task.project_id, args.assignee)
 
     # Separate update fields from move fields
     # update_task() handles: content, description, labels, priority, due, assignee_id
@@ -731,6 +737,7 @@ def main():
 
     p = subparsers.add_parser("done", help="Complete a task")
     p.add_argument("id", help="Task ID")
+    p.add_argument("--note", help="Closing note appended to the task description before completing")
 
     p = subparsers.add_parser("delete", help="Delete a task (works on completed tasks too)")
     p.add_argument("id", help="Task ID")

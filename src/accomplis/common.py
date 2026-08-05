@@ -168,16 +168,36 @@ def resolve_section(api, project_id: str, name_or_id: str) -> str:
     sys.exit(1)
 
 
-def resolve_assignee(api, project_id: str, name_or_email: str) -> str:
-    """Resolve an assignee name/email to user ID."""
+def resolve_assignee(api, project_id: str, name_email_or_id: str) -> str:
+    """Resolve an assignee to a user ID.
+
+    Accepts a name (exact, then unique substring), an email, or the numeric id
+    that `accomplis collaborators` emits — the tool's own output must round-trip
+    into its own filter (tgt-husule).
+    """
     collaborators = collect_paginated(api.get_collaborators(project_id))
-    name_lower = name_or_email.lower()
+    needle = name_email_or_id.lower()
 
     for c in collaborators:
-        if c.name.lower() == name_lower or c.email.lower() == name_lower:
+        if (c.name.lower() == needle
+                or c.email.lower() == needle
+                or str(c.id) == name_email_or_id):
             return c.id
 
-    print(f"Error: Collaborator '{name_or_email}' not found in project", file=sys.stderr)
+    partial = [c for c in collaborators if needle in c.name.lower()]
+    if len(partial) == 1:
+        return partial[0].id
+    if len(partial) > 1:
+        names = ", ".join(c.name for c in partial)
+        print(f"Error: '{name_email_or_id}' matches several collaborators: {names}",
+              file=sys.stderr)
+        sys.exit(1)
+
+    available = ", ".join(f"{c.name} <{c.email}> ({c.id})" for c in collaborators)
+    print(f"Error: Collaborator '{name_email_or_id}' not found in project.",
+          file=sys.stderr)
+    print(f"Accepts name, email, or id. Available: {available or 'none — project has no collaborators'}",
+          file=sys.stderr)
     sys.exit(1)
 
 

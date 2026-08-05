@@ -80,3 +80,22 @@ def test_legacy_only_layout_no_selfmigration(stores, monkeypatch):
     monkeypatch.setattr(token_store, "TOKEN_FILE", legacy)
     legacy.write_text("tok-legacy\n")
     assert token_store._get_from_file() == "tok-legacy"
+
+
+def test_not_found_error_names_resolved_paths(stores, monkeypatch, capsys):
+    """tgt-zanute: the error names resolved absolute paths per rung consulted,
+    with existence markers and HOME/USER — never templates or tildes."""
+    new, old_rename, old_cutover, legacy = stores
+    monkeypatch.delenv("TODOIST_API_KEY", raising=False)
+    monkeypatch.setattr(token_store, "_has_keychain", lambda: False)
+
+    with pytest.raises(SystemExit):
+        token_store.get_token()
+
+    err = capsys.readouterr().err
+    for rung in (new, old_rename, old_cutover, legacy):
+        assert str(rung) in err, f"rung {rung} not named in error"
+    assert "missing" in err
+    assert "HOME=" in err
+    assert "USER=" in err
+    assert "~/" not in err  # resolved paths only, no templates
