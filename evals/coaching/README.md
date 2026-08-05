@@ -41,6 +41,17 @@ Costs real tokens: each run is an inner `claude -p` session (~1 min, ~5-8 CLI ca
 
 After editing a rubric or checker: `smevals grade . -g judge --regrade`.
 
+## First campaign (2026-08-05) — headline results
+
+Current as of that evening's runs (sonnet n≈5, opus/fable n=3, honest judge); regenerate reports from `runs/` for anything load-bearing.
+
+- **Discovery needs no skill at any model tier** — bare Sonnet/Opus/Fable all pass both fixture-world traps, every run, zero guessed containers.
+- **Method and convention need it at every tier** — bare Fable and bare Opus both score 0.82 on weekly-review (delete-language in prose, missed planted catches) vs 0.95–1.00 with the skill.
+- **Economy is universal** — the skill cuts CLI calls ~33–40% for every model (fable 10.4→6.6, sonnet 14.7→8.6, opus 16.1→10.8).
+- **Attention-narrowing is real and capability-graded** — skill-Sonnet read the Inbox in 0% of take-this-on runs (bare: 100%); skill-Opus and skill-Fable kept sweeping (100%). Fixed by moving the grounding method INTO SKILL.md (0%→80%); the same text in PATTERNS.md changed nothing — residence beats richness, measured.
+- **Judge rubrics are floors, not fences** — the first judge zeroed fixture-accurate answers as "fabrication"; see checkers/judge and the 2026-08-05 commits.
+- Containment: one run of 63 escaped the context wall pre-tripwire (read-only); see the tripwire in runner-core.sh and the credential-isolation follow-up on the board.
+
 ## Caveats
 
 - **Bare is not zero-affordance:** the bare config still names the CLI in the prompt (a user who installed accomplis but has no skill). A true nothing baseline would trivially score 0 and measure nothing.
