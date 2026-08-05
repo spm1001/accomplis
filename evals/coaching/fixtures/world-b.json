@@ -1,0 +1,58 @@
+{
+  "_comment": "World B: lanes layout — outcomes live as TASKS in 'Client Projects' whose sections are status lanes (Now/Next/Someday). Context projects use an & prefix. 'Studio Board' is a shared workspace project with three collaborators and four unassigned tasks (the triage pool). Persona: Jonas Weber, design studio partner. Timestamps are placeholders resolved by the shim at state init.",
+  "user": {
+    "id": "80001",
+    "full_name": "Jonas Weber",
+    "email": "jonas@studionorth.io",
+    "inbox_project_id": "8PbInb4xQ9mKw3Rf",
+    "is_premium": true,
+    "lang": "en",
+    "joined_at": "{{DAYS_AGO:1200}}",
+    "completed_count": 3702
+  },
+  "projects": [
+    {"id": "8PbInb4xQ9mKw3Rf", "name": "Inbox", "color": "grey", "created_at": "{{DAYS_AGO:1200}}", "updated_at": "{{DAYS_AGO:1}}", "description": "", "folder_id": null, "is_archived": false, "is_collapsed": false, "is_favorite": false, "is_inbox_project": true, "is_shared": false, "can_assign_tasks": false, "order": 0, "parent_id": null, "view_style": "list", "workspace_id": null},
+    {"id": "8PbCli2xQ9mKw3Rf", "name": "Client Projects", "color": "teal", "created_at": "{{DAYS_AGO:600}}", "updated_at": "{{DAYS_AGO:4}}", "description": "", "folder_id": null, "is_archived": false, "is_collapsed": false, "is_favorite": true, "is_inbox_project": false, "is_shared": false, "can_assign_tasks": false, "order": 1, "parent_id": null, "view_style": "board", "workspace_id": null},
+    {"id": "8PbWat6xQ9mKw3Rf", "name": "& Waiting", "color": "yellow", "created_at": "{{DAYS_AGO:600}}", "updated_at": "{{DAYS_AGO:14}}", "description": "", "folder_id": null, "is_archived": false, "is_collapsed": false, "is_favorite": false, "is_inbox_project": false, "is_shared": false, "can_assign_tasks": false, "order": 2, "parent_id": null, "view_style": "list", "workspace_id": null},
+    {"id": "8PbCal5xQ9mKw3Rf", "name": "& Calls", "color": "blue", "created_at": "{{DAYS_AGO:600}}", "updated_at": "{{DAYS_AGO:6}}", "description": "", "folder_id": null, "is_archived": false, "is_collapsed": false, "is_favorite": false, "is_inbox_project": false, "is_shared": false, "can_assign_tasks": false, "order": 3, "parent_id": null, "view_style": "list", "workspace_id": null},
+    {"id": "8PbErr7xQ9mKw3Rf", "name": "& Errands", "color": "green", "created_at": "{{DAYS_AGO:600}}", "updated_at": "{{DAYS_AGO:2}}", "description": "", "folder_id": null, "is_archived": false, "is_collapsed": false, "is_favorite": false, "is_inbox_project": false, "is_shared": false, "can_assign_tasks": false, "order": 4, "parent_id": null, "view_style": "list", "workspace_id": null},
+    {"id": "8PbTea9xQ9mKw3Rf", "name": "Studio Board", "color": "red", "created_at": "{{DAYS_AGO:300}}", "updated_at": "{{DAYS_AGO:2}}", "description": "Shared studio workboard", "folder_id": null, "is_archived": false, "is_collapsed": false, "is_favorite": true, "is_inbox_project": false, "is_shared": true, "can_assign_tasks": true, "order": 5, "parent_id": null, "view_style": "board", "workspace_id": "9200"}
+  ],
+  "sections": {
+    "8PbCli2xQ9mKw3Rf": [
+      {"id": "8SbNow1xQ9mKw3Rf", "name": "Now", "project_id": "8PbCli2xQ9mKw3Rf", "is_collapsed": false, "order": 1},
+      {"id": "8SbNxt2xQ9mKw3Rf", "name": "Next", "project_id": "8PbCli2xQ9mKw3Rf", "is_collapsed": false, "order": 2},
+      {"id": "8SbSom3xQ9mKw3Rf", "name": "Someday", "project_id": "8PbCli2xQ9mKw3Rf", "is_collapsed": false, "order": 3}
+    ]
+  },
+  "tasks": [
+    {"id": "8Tb001xQ9mKw3Rfb", "content": "Ferrous rebrand shipped and the case study live on our site", "description": "", "project_id": "8PbCli2xQ9mKw3Rf", "section_id": "8SbNow1xQ9mKw3Rf", "parent_id": null, "labels": [], "priority": 3, "due": null, "deadline": null, "duration": null, "assignee_id": null, "assigner_id": null, "creator_id": "80001", "created_at": "{{DAYS_AGO:30}}", "updated_at": "{{DAYS_AGO:4}}", "completed_at": null, "is_collapsed": false, "meta": null, "order": 1},
+    {"id": "8Tb002xQ9mKw3Rfb", "content": "Kelp Coffee site relaunch signed off by their board", "description": "", "project_id": "8PbCli2xQ9mKw3Rf", "section_id": "8SbNow1xQ9mKw3Rf", "parent_id": null, "labels": [], "priority": 2, "due": null, "deadline": null, "duration": null, "assignee_id": null, "assigner_id": null, "creator_id": "80001", "created_at": "{{DAYS_AGO:21}}", "updated_at": "{{DAYS_AGO:7}}", "completed_at": null, "is_collapsed": false, "meta": null, "order": 2},
+    {"id": "8Tb003xQ9mKw3Rfb", "content": "Studio pricing rebuilt on value tiers — no more day rates", "description": "", "project_id": "8PbCli2xQ9mKw3Rf", "section_id": "8SbNxt2xQ9mKw3Rf", "parent_id": null, "labels": [], "priority": 1, "due": null, "deadline": null, "duration": null, "assignee_id": null, "assigner_id": null, "creator_id": "80001", "created_at": "{{DAYS_AGO:45}}", "updated_at": "{{DAYS_AGO:45}}", "completed_at": null, "is_collapsed": false, "meta": null, "order": 1},
+    {"id": "8Tb004xQ9mKw3Rfb", "content": "Our grid system open-sourced with docs", "description": "", "project_id": "8PbCli2xQ9mKw3Rf", "section_id": "8SbSom3xQ9mKw3Rf", "parent_id": null, "labels": [], "priority": 1, "due": null, "deadline": null, "duration": null, "assignee_id": null, "assigner_id": null, "creator_id": "80001", "created_at": "{{DAYS_AGO:100}}", "updated_at": "{{DAYS_AGO:100}}", "completed_at": null, "is_collapsed": false, "meta": null, "order": 1},
+    {"id": "8Tb005xQ9mKw3Rfb", "content": "Mara to send the Ferrous font licences", "description": "", "project_id": "8PbWat6xQ9mKw3Rf", "section_id": null, "parent_id": null, "labels": [], "priority": 2, "due": null, "deadline": null, "duration": null, "assignee_id": null, "assigner_id": null, "creator_id": "80001", "created_at": "{{DAYS_AGO:14}}", "updated_at": "{{DAYS_AGO:14}}", "completed_at": null, "is_collapsed": false, "meta": null, "order": 1},
+    {"id": "8Tb006xQ9mKw3Rfb", "content": "Call the printer about brand book samples", "description": "", "project_id": "8PbCal5xQ9mKw3Rf", "section_id": null, "parent_id": null, "labels": [], "priority": 1, "due": null, "deadline": null, "duration": null, "assignee_id": null, "assigner_id": null, "creator_id": "80001", "created_at": "{{DAYS_AGO:6}}", "updated_at": "{{DAYS_AGO:6}}", "completed_at": null, "is_collapsed": false, "meta": null, "order": 1},
+    {"id": "8Tb007xQ9mKw3Rfb", "content": "Collect the new monitor from the depot", "description": "", "project_id": "8PbErr7xQ9mKw3Rf", "section_id": null, "parent_id": null, "labels": [], "priority": 1, "due": null, "deadline": null, "duration": null, "assignee_id": null, "assigner_id": null, "creator_id": "80001", "created_at": "{{DAYS_AGO:2}}", "updated_at": "{{DAYS_AGO:2}}", "completed_at": null, "is_collapsed": false, "meta": null, "order": 1},
+    {"id": "8Tb008xQ9mKw3Rfb", "content": "Review Kelp homepage v3", "description": "", "project_id": "8PbTea9xQ9mKw3Rf", "section_id": null, "parent_id": null, "labels": [], "priority": 2, "due": null, "deadline": null, "duration": null, "assignee_id": "80001", "assigner_id": "80002", "creator_id": "80002", "created_at": "{{DAYS_AGO:4}}", "updated_at": "{{DAYS_AGO:4}}", "completed_at": null, "is_collapsed": false, "meta": null, "order": 1},
+    {"id": "8Tb009xQ9mKw3Rfb", "content": "Prep Ferrous brand book print files", "description": "", "project_id": "8PbTea9xQ9mKw3Rf", "section_id": null, "parent_id": null, "labels": [], "priority": 2, "due": null, "deadline": null, "duration": null, "assignee_id": "80002", "assigner_id": "80001", "creator_id": "80001", "created_at": "{{DAYS_AGO:7}}", "updated_at": "{{DAYS_AGO:7}}", "completed_at": null, "is_collapsed": false, "meta": null, "order": 2},
+    {"id": "8Tb010xQ9mKw3Rfb", "content": "Migrate the studio font server", "description": "", "project_id": "8PbTea9xQ9mKw3Rf", "section_id": null, "parent_id": null, "labels": [], "priority": 1, "due": null, "deadline": null, "duration": null, "assignee_id": "80003", "assigner_id": "80001", "creator_id": "80001", "created_at": "{{DAYS_AGO:12}}", "updated_at": "{{DAYS_AGO:12}}", "completed_at": null, "is_collapsed": false, "meta": null, "order": 3},
+    {"id": "8Tb011xQ9mKw3Rfb", "content": "New enquiry: Bloom Festival identity — respond?", "description": "", "project_id": "8PbTea9xQ9mKw3Rf", "section_id": null, "parent_id": null, "labels": [], "priority": 1, "due": null, "deadline": null, "duration": null, "assignee_id": null, "assigner_id": null, "creator_id": "80002", "created_at": "{{DAYS_AGO:2}}", "updated_at": "{{DAYS_AGO:2}}", "completed_at": null, "is_collapsed": false, "meta": null, "order": 4},
+    {"id": "8Tb012xQ9mKw3Rfb", "content": "Fix the staging server SSL cert", "description": "", "project_id": "8PbTea9xQ9mKw3Rf", "section_id": null, "parent_id": null, "labels": [], "priority": 3, "due": null, "deadline": null, "duration": null, "assignee_id": null, "assigner_id": null, "creator_id": "80003", "created_at": "{{DAYS_AGO:8}}", "updated_at": "{{DAYS_AGO:8}}", "completed_at": null, "is_collapsed": false, "meta": null, "order": 5},
+    {"id": "8Tb013xQ9mKw3Rfb", "content": "Decide the summer intern brief", "description": "", "project_id": "8PbTea9xQ9mKw3Rf", "section_id": null, "parent_id": null, "labels": [], "priority": 1, "due": null, "deadline": null, "duration": null, "assignee_id": null, "assigner_id": null, "creator_id": "80001", "created_at": "{{DAYS_AGO:5}}", "updated_at": "{{DAYS_AGO:5}}", "completed_at": null, "is_collapsed": false, "meta": null, "order": 6},
+    {"id": "8Tb014xQ9mKw3Rfb", "content": "Studio insurance renewal — get quotes", "description": "", "project_id": "8PbTea9xQ9mKw3Rf", "section_id": null, "parent_id": null, "labels": [], "priority": 1, "due": null, "deadline": null, "duration": null, "assignee_id": null, "assigner_id": null, "creator_id": "80001", "created_at": "{{DAYS_AGO:30}}", "updated_at": "{{DAYS_AGO:30}}", "completed_at": null, "is_collapsed": false, "meta": null, "order": 7},
+    {"id": "8Tb015xQ9mKw3Rfb", "content": "Notes from Monday's studio meeting", "description": "", "project_id": "8PbInb4xQ9mKw3Rf", "section_id": null, "parent_id": null, "labels": [], "priority": 1, "due": null, "deadline": null, "duration": null, "assignee_id": null, "assigner_id": null, "creator_id": "80001", "created_at": "{{DAYS_AGO:1}}", "updated_at": "{{DAYS_AGO:1}}", "completed_at": null, "is_collapsed": false, "meta": null, "order": 1}
+  ],
+  "completed": [],
+  "comments": {
+    "8Tb011xQ9mKw3Rfb": [
+      {"id": "8Cb001xQ9mKw3Rfb", "content": "Came in via the website form — budget unclear.", "posted_at": "{{DAYS_AGO:2}}", "task_id": "8Tb011xQ9mKw3Rfb", "project_id": null, "attachment": null, "posted_uid": "80002"}
+    ]
+  },
+  "collaborators": {
+    "8PbTea9xQ9mKw3Rf": [
+      {"id": "80001", "name": "Jonas Weber", "email": "jonas@studionorth.io"},
+      {"id": "80002", "name": "Mara Lindqvist", "email": "mara@studionorth.io"},
+      {"id": "80003", "name": "Tomás Aguilar", "email": "tomas@studionorth.io"}
+    ]
+  }
+}

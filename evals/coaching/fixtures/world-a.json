@@ -1,0 +1,52 @@
+{
+  "_comment": "World A: sections-as-outcomes layout, @ prefix contexts. Persona: Priya Nair, freelance product consultant. Planted review-catches: two stale @Wait items (46d, 75d), one outcome section with no next action (Spoke at two industry events), a near-duplicate pair (7Ta005 vs 7Ta013), two unprocessed Inbox items. Timestamps are placeholders resolved by the shim at state init.",
+  "user": {
+    "id": "70001",
+    "full_name": "Priya Nair",
+    "email": "priya@meridianloop.com",
+    "inbox_project_id": "7PaInb4xQ9mKw3Rf",
+    "is_premium": true,
+    "lang": "en",
+    "joined_at": "{{DAYS_AGO:900}}",
+    "completed_count": 1418
+  },
+  "projects": [
+    {"id": "7PaInb4xQ9mKw3Rf", "name": "Inbox", "color": "grey", "created_at": "{{DAYS_AGO:900}}", "updated_at": "{{DAYS_AGO:2}}", "description": "", "folder_id": null, "is_archived": false, "is_collapsed": false, "is_favorite": false, "is_inbox_project": true, "is_shared": false, "can_assign_tasks": false, "order": 0, "parent_id": null, "view_style": "list", "workspace_id": null},
+    {"id": "7PaOut2xQ9mKw3Rf", "name": "Outcomes 2026", "color": "berry_red", "created_at": "{{DAYS_AGO:220}}", "updated_at": "{{DAYS_AGO:5}}", "description": "", "folder_id": null, "is_archived": false, "is_collapsed": false, "is_favorite": true, "is_inbox_project": false, "is_shared": false, "can_assign_tasks": false, "order": 1, "parent_id": null, "view_style": "board", "workspace_id": null},
+    {"id": "7PaAct5xQ9mKw3Rf", "name": "@Actions", "color": "blue", "created_at": "{{DAYS_AGO:400}}", "updated_at": "{{DAYS_AGO:3}}", "description": "", "folder_id": null, "is_archived": false, "is_collapsed": false, "is_favorite": true, "is_inbox_project": false, "is_shared": false, "can_assign_tasks": false, "order": 2, "parent_id": null, "view_style": "list", "workspace_id": null},
+    {"id": "7PaWai6xQ9mKw3Rf", "name": "@Wait", "color": "yellow", "created_at": "{{DAYS_AGO:400}}", "updated_at": "{{DAYS_AGO:9}}", "description": "", "folder_id": null, "is_archived": false, "is_collapsed": false, "is_favorite": false, "is_inbox_project": false, "is_shared": false, "can_assign_tasks": false, "order": 3, "parent_id": null, "view_style": "list", "workspace_id": null},
+    {"id": "7PaSom8xQ9mKw3Rf", "name": "@Someday", "color": "green", "created_at": "{{DAYS_AGO:400}}", "updated_at": "{{DAYS_AGO:90}}", "description": "", "folder_id": null, "is_archived": false, "is_collapsed": false, "is_favorite": false, "is_inbox_project": false, "is_shared": false, "can_assign_tasks": false, "order": 4, "parent_id": null, "view_style": "list", "workspace_id": null},
+    {"id": "7PaRef3xQ9mKw3Rf", "name": "Client Notes", "color": "charcoal", "created_at": "{{DAYS_AGO:400}}", "updated_at": "{{DAYS_AGO:30}}", "description": "Reference material only", "folder_id": null, "is_archived": false, "is_collapsed": false, "is_favorite": false, "is_inbox_project": false, "is_shared": false, "can_assign_tasks": false, "order": 5, "parent_id": null, "view_style": "list", "workspace_id": null}
+  ],
+  "sections": {
+    "7PaOut2xQ9mKw3Rf": [
+      {"id": "7SaHor1xQ9mKw3Rf", "name": "Landed the Horizon Health retainer", "project_id": "7PaOut2xQ9mKw3Rf", "is_collapsed": false, "order": 1},
+      {"id": "7SaPri2xQ9mKw3Rf", "name": "Pricing pages ship without me in the loop", "project_id": "7PaOut2xQ9mKw3Rf", "is_collapsed": false, "order": 2},
+      {"id": "7SaSpk3xQ9mKw3Rf", "name": "Spoke at two industry events this year", "project_id": "7PaOut2xQ9mKw3Rf", "is_collapsed": false, "order": 3}
+    ]
+  },
+  "tasks": [
+    {"id": "7Ta001xQ9mKw3Rfb", "content": "Draft renewal proposal for Horizon", "description": "", "project_id": "7PaOut2xQ9mKw3Rf", "section_id": "7SaHor1xQ9mKw3Rf", "parent_id": null, "labels": [], "priority": 3, "due": null, "deadline": null, "duration": null, "assignee_id": null, "assigner_id": null, "creator_id": "70001", "created_at": "{{DAYS_AGO:10}}", "updated_at": "{{DAYS_AGO:8}}", "completed_at": null, "is_collapsed": false, "meta": null, "order": 1},
+    {"id": "7Ta002xQ9mKw3Rfb", "content": "Book Q3 review call with Dana", "description": "", "project_id": "7PaOut2xQ9mKw3Rf", "section_id": "7SaHor1xQ9mKw3Rf", "parent_id": null, "labels": [], "priority": 1, "due": {"date": "{{DATE_AHEAD:7}}", "is_recurring": false, "string": "next week", "datetime": null, "timezone": null}, "deadline": null, "duration": null, "assignee_id": null, "assigner_id": null, "creator_id": "70001", "created_at": "{{DAYS_AGO:5}}", "updated_at": "{{DAYS_AGO:5}}", "completed_at": null, "is_collapsed": false, "meta": null, "order": 2},
+    {"id": "7Ta003xQ9mKw3Rfb", "content": "Write handover doc for the pricing experiments", "description": "", "project_id": "7PaOut2xQ9mKw3Rf", "section_id": "7SaPri2xQ9mKw3Rf", "parent_id": null, "labels": [], "priority": 2, "due": null, "deadline": null, "duration": null, "assignee_id": null, "assigner_id": null, "creator_id": "70001", "created_at": "{{DAYS_AGO:20}}", "updated_at": "{{DAYS_AGO:18}}", "completed_at": null, "is_collapsed": false, "meta": null, "order": 1},
+    {"id": "7Ta004xQ9mKw3Rfb", "content": "Send invoice #218 to Brightline", "description": "", "project_id": "7PaAct5xQ9mKw3Rf", "section_id": null, "parent_id": null, "labels": [], "priority": 3, "due": null, "deadline": null, "duration": null, "assignee_id": null, "assigner_id": null, "creator_id": "70001", "created_at": "{{DAYS_AGO:3}}", "updated_at": "{{DAYS_AGO:3}}", "completed_at": null, "is_collapsed": false, "meta": null, "order": 1},
+    {"id": "7Ta005xQ9mKw3Rfb", "content": "Update portfolio with the Horizon case study", "description": "", "project_id": "7PaAct5xQ9mKw3Rf", "section_id": null, "parent_id": null, "labels": [], "priority": 1, "due": null, "deadline": null, "duration": null, "assignee_id": null, "assigner_id": null, "creator_id": "70001", "created_at": "{{DAYS_AGO:12}}", "updated_at": "{{DAYS_AGO:12}}", "completed_at": null, "is_collapsed": false, "meta": null, "order": 2},
+    {"id": "7Ta006xQ9mKw3Rfb", "content": "Fix the RSS feed on the blog", "description": "", "project_id": "7PaAct5xQ9mKw3Rf", "section_id": null, "parent_id": null, "labels": [], "priority": 1, "due": null, "deadline": null, "duration": null, "assignee_id": null, "assigner_id": null, "creator_id": "70001", "created_at": "{{DAYS_AGO:60}}", "updated_at": "{{DAYS_AGO:60}}", "completed_at": null, "is_collapsed": false, "meta": null, "order": 3},
+    {"id": "7Ta007xQ9mKw3Rfb", "content": "Dana to confirm Q3 budget — emailed 20 Jun", "description": "", "project_id": "7PaWai6xQ9mKw3Rf", "section_id": null, "parent_id": null, "labels": [], "priority": 2, "due": null, "deadline": null, "duration": null, "assignee_id": null, "assigner_id": null, "creator_id": "70001", "created_at": "{{DAYS_AGO:46}}", "updated_at": "{{DAYS_AGO:46}}", "completed_at": null, "is_collapsed": false, "meta": null, "order": 1},
+    {"id": "7Ta008xQ9mKw3Rfb", "content": "Brightline legal to countersign the contract", "description": "", "project_id": "7PaWai6xQ9mKw3Rf", "section_id": null, "parent_id": null, "labels": [], "priority": 2, "due": null, "deadline": null, "duration": null, "assignee_id": null, "assigner_id": null, "creator_id": "70001", "created_at": "{{DAYS_AGO:9}}", "updated_at": "{{DAYS_AGO:9}}", "completed_at": null, "is_collapsed": false, "meta": null, "order": 2},
+    {"id": "7Ta009xQ9mKw3Rfb", "content": "Refund from the cancelled conference ticket", "description": "", "project_id": "7PaWai6xQ9mKw3Rf", "section_id": null, "parent_id": null, "labels": [], "priority": 1, "due": null, "deadline": null, "duration": null, "assignee_id": null, "assigner_id": null, "creator_id": "70001", "created_at": "{{DAYS_AGO:75}}", "updated_at": "{{DAYS_AGO:75}}", "completed_at": null, "is_collapsed": false, "meta": null, "order": 3},
+    {"id": "7Ta010xQ9mKw3Rfb", "content": "Learn Rive animation", "description": "", "project_id": "7PaSom8xQ9mKw3Rf", "section_id": null, "parent_id": null, "labels": [], "priority": 1, "due": null, "deadline": null, "duration": null, "assignee_id": null, "assigner_id": null, "creator_id": "70001", "created_at": "{{DAYS_AGO:120}}", "updated_at": "{{DAYS_AGO:120}}", "completed_at": null, "is_collapsed": false, "meta": null, "order": 1},
+    {"id": "7Ta011xQ9mKw3Rfb", "content": "Turn the pricing framework into a self-serve course", "description": "", "project_id": "7PaSom8xQ9mKw3Rf", "section_id": null, "parent_id": null, "labels": [], "priority": 1, "due": null, "deadline": null, "duration": null, "assignee_id": null, "assigner_id": null, "creator_id": "70001", "created_at": "{{DAYS_AGO:90}}", "updated_at": "{{DAYS_AGO:90}}", "completed_at": null, "is_collapsed": false, "meta": null, "order": 2},
+    {"id": "7Ta012xQ9mKw3Rfb", "content": "Sana called about a workshop — ring her back?", "description": "", "project_id": "7PaInb4xQ9mKw3Rf", "section_id": null, "parent_id": null, "labels": [], "priority": 1, "due": null, "deadline": null, "duration": null, "assignee_id": null, "assigner_id": null, "creator_id": "70001", "created_at": "{{DAYS_AGO:2}}", "updated_at": "{{DAYS_AGO:2}}", "completed_at": null, "is_collapsed": false, "meta": null, "order": 1},
+    {"id": "7Ta013xQ9mKw3Rfb", "content": "Portfolio update for Horizon — see email from Marc", "description": "", "project_id": "7PaInb4xQ9mKw3Rf", "section_id": null, "parent_id": null, "labels": [], "priority": 1, "due": null, "deadline": null, "duration": null, "assignee_id": null, "assigner_id": null, "creator_id": "70001", "created_at": "{{DAYS_AGO:4}}", "updated_at": "{{DAYS_AGO:4}}", "completed_at": null, "is_collapsed": false, "meta": null, "order": 2}
+  ],
+  "completed": [
+    {"id": "7Ta014xQ9mKw3Rfb", "content": "Sent the Q2 retro deck to Horizon", "description": "", "project_id": "7PaOut2xQ9mKw3Rf", "section_id": "7SaHor1xQ9mKw3Rf", "parent_id": null, "labels": [], "priority": 1, "due": null, "deadline": null, "duration": null, "assignee_id": null, "assigner_id": null, "creator_id": "70001", "created_at": "{{DAYS_AGO:15}}", "updated_at": "{{DAYS_AGO:3}}", "completed_at": "{{DAYS_AGO:3}}", "is_collapsed": false, "meta": null, "order": 1}
+  ],
+  "comments": {
+    "7Ta001xQ9mKw3Rfb": [
+      {"id": "7Ca001xQ9mKw3Rfb", "content": "Dana hinted the budget sign-off is likely — aim high.", "posted_at": "{{DAYS_AGO:8}}", "task_id": "7Ta001xQ9mKw3Rfb", "project_id": null, "attachment": null, "posted_uid": "70001"}
+    ]
+  },
+  "collaborators": {}
+}

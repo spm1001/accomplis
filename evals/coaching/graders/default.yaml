@@ -1,0 +1,5 @@
+name: default
+checks:
+  - checker: ../checkers/cli-log
+scoring:
+  pass_threshold: 1.0

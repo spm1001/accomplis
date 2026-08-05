@@ -1,0 +1,772 @@
+#!/usr/bin/env python3
+"""Fixture shim impersonating the accomplis CLI for the coaching eval.
+
+Serves canned Todoist data from a fixture world (ACCOMPLIS_FIXTURE), mutates a
+per-run state copy so writes read back, and appends every invocation's argv to
+ACCOMPLIS_LOG — the deterministic observable the graders assert on.
+
+Runs inside the ardoise isolation wall: stdlib only, system python3 (uv is not
+on the inner PATH by design — the wall would otherwise leak the real CLI).
+
+Env contract:
+  ACCOMPLIS_FIXTURE  path to the world JSON (required)
+  ACCOMPLIS_LOG      path to append argv lines to (required)
+  ACCOMPLIS_STATE    state file (default: <dir of LOG>/world-state.json)
+
+Output fidelity is copied from src/accomplis/cli.py + common.py — stderr info
+lines, error texts and JSON shapes are reproduced word-for-word where a grader
+or the model under test could observe them.
+"""
+
+import argparse
+import json
+import os
+import re
+import shlex
+import sys
+from datetime import datetime, timedelta
+
+
+# ── Logging: every invocation, before anything can fail ─────────────────────
+
+def log_invocation():
+    log_path = os.environ.get("ACCOMPLIS_LOG")
+    if not log_path:
+        print("shim error: ACCOMPLIS_LOG not set (harness misconfiguration)", file=sys.stderr)
+        sys.exit(2)
+    with open(log_path, "a") as f:
+        f.write(shlex.join(["accomplis"] + sys.argv[1:]) + "\n")
+
+
+# ── State: fixture → per-run mutable copy ────────────────────────────────────
+
+PLACEHOLDER = re.compile(r"^\{\{(DAYS_AGO|DATE_AHEAD):(\d+)\}\}$")
+
+
+def resolve_placeholders(obj):
+    if isinstance(obj, dict):
+        return {k: resolve_placeholders(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [resolve_placeholders(v) for v in obj]
+    if isinstance(obj, str):
+        m = PLACEHOLDER.match(obj)
+        if m:
+            kind, n = m.group(1), int(m.group(2))
+            if kind == "DAYS_AGO":
+                return (datetime.now() - timedelta(days=n)).strftime("%Y-%m-%dT09:30:00.000000Z")
+            return (datetime.now() + timedelta(days=n)).strftime("%Y-%m-%d")
+    return obj
+
+
+def state_paths():
+    fixture = os.environ.get("ACCOMPLIS_FIXTURE")
+    if not fixture:
+        print("shim error: ACCOMPLIS_FIXTURE not set (harness misconfiguration)", file=sys.stderr)
+        sys.exit(2)
+    state = os.environ.get("ACCOMPLIS_STATE")
+    if not state:
+        state = os.path.join(os.path.dirname(os.environ["ACCOMPLIS_LOG"]), "world-state.json")
+    return fixture, state
+
+
+def load_state():
+    fixture, state_path = state_paths()
+    if os.path.exists(state_path):
+        with open(state_path) as f:
+            return json.load(f), state_path
+    with open(fixture) as f:
+        world = resolve_placeholders(json.load(f))
+    world.pop("_comment", None)
+    world["_next_id"] = 1
+    save_state(world, state_path)
+    return world, state_path
+
+
+def save_state(world, state_path):
+    tmp = state_path + ".tmp"
+    with open(tmp, "w") as f:
+        json.dump(world, f, indent=2)
+    os.replace(tmp, state_path)
+
+
+def mint_id(world):
+    n = world.get("_next_id", 1)
+    world["_next_id"] = n + 1
+    return f"Sim{n:03d}xQw9Mk2Rfb"
+
+
+# ── Output helpers (match cli.py) ────────────────────────────────────────────
+
+def output_json(data):
+    print(json.dumps(data, indent=2, default=str))
+
+
+def now_iso():
+    return datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f") + "Z"
+
+
+# ── Resolution (match common.py, including error texts) ─────────────────────
+
+def resolve_project(world, name_or_id):
+    name_lower = name_or_id.lower()
+    for p in world["projects"]:
+        if p["name"].lower() == name_lower:
+            return p["id"]
+    for p in world["projects"]:
+        if p["id"] == name_or_id:
+            return p["id"]
+    available = sorted(p["name"] for p in world["projects"])
+    print(f"Error: Project '{name_or_id}' not found", file=sys.stderr)
+    print(f"Available projects: {', '.join(available[:10])}", file=sys.stderr)
+    if len(available) > 10:
+        print(f"  ...and {len(available) - 10} more", file=sys.stderr)
+    print("\n⚠️  STOP: Load the accomplis skill before using this CLI!", file=sys.stderr)
+    sys.exit(1)
+
+
+def get_project(world, project_id):
+    for p in world["projects"]:
+        if p["id"] == project_id:
+            return p
+    return None
+
+
+def resolve_section(world, project_id, name_or_id):
+    sections = world["sections"].get(project_id, [])
+    name_lower = name_or_id.lower()
+    for s in sections:
+        if s["name"].lower() == name_lower:
+            return s["id"]
+    for s in sections:
+        if s["id"] == name_or_id:
+            return s["id"]
+    available = [s["name"] for s in sections]
+    print(f"Error: Section '{name_or_id}' not found in project", file=sys.stderr)
+    if available:
+        print(f"Available sections: {', '.join(available)}", file=sys.stderr)
+    else:
+        print("This project has no sections.", file=sys.stderr)
+    print("\n⚠️  STOP: Load the accomplis skill before using this CLI!", file=sys.stderr)
+    sys.exit(1)
+
+
+def resolve_assignee(world, project_id, needle_raw):
+    collaborators = world["collaborators"].get(project_id, [])
+    needle = needle_raw.lower()
+    for c in collaborators:
+        if c["name"].lower() == needle or c["email"].lower() == needle or str(c["id"]) == needle_raw:
+            return c["id"]
+    partial = [c for c in collaborators if needle in c["name"].lower()]
+    if len(partial) == 1:
+        return partial[0]["id"]
+    if len(partial) > 1:
+        names = ", ".join(c["name"] for c in partial)
+        print(f"Error: '{needle_raw}' matches several collaborators: {names}", file=sys.stderr)
+        sys.exit(1)
+    available = ", ".join(f"{c['name']} <{c['email']}> ({c['id']})" for c in collaborators)
+    print(f"Error: Collaborator '{needle_raw}' not found in project.", file=sys.stderr)
+    print(f"Accepts name, email, or id. Available: {available or 'none — project has no collaborators'}",
+          file=sys.stderr)
+    sys.exit(1)
+
+
+def find_task(world, task_id, include_completed=False):
+    for t in world["tasks"]:
+        if t["id"] == task_id:
+            return t
+    if include_completed:
+        for t in world["completed"]:
+            if t["id"] == task_id:
+                return t
+    return None
+
+
+def task_not_found(task_id):
+    print(f"Error: Task '{task_id}' not found or invalid", file=sys.stderr)
+    sys.exit(1)
+
+
+# ── Command handlers ─────────────────────────────────────────────────────────
+
+def cmd_projects(world, state_path, args):
+    output_json(world["projects"])
+
+
+def cmd_sections(world, state_path, args):
+    project_id = args.project_id
+    if args.project:
+        project_id = resolve_project(world, args.project)
+    if project_id:
+        output_json(world["sections"].get(project_id, []))
+    else:
+        all_sections = [s for secs in world["sections"].values() for s in secs]
+        output_json(all_sections)
+
+
+def cmd_tasks(world, state_path, args):
+    project_id = args.project_id
+    project_obj = None
+    if args.project:
+        project_id = resolve_project(world, args.project)
+        project_obj = get_project(world, project_id)
+    elif args.project_id:
+        project_obj = get_project(world, args.project_id)
+
+    section_id = args.section_id
+    if args.section:
+        if not project_id:
+            print("Error: --section requires --project or --project-id", file=sys.stderr)
+            sys.exit(1)
+        section_id = resolve_section(world, project_id, args.section)
+
+    tasks = [t for t in world["tasks"] if t.get("completed_at") is None]
+    if project_id:
+        tasks = [t for t in tasks if t["project_id"] == project_id]
+    if section_id:
+        tasks = [t for t in tasks if t.get("section_id") == section_id]
+    if args.label:
+        tasks = [t for t in tasks if args.label in t.get("labels", [])]
+
+    collabs = world["collaborators"].get(project_id, []) if project_id else []
+    assignee_map = {c["id"]: c["name"] for c in collabs}
+
+    is_workspace_project = project_obj is not None and project_obj.get("workspace_id") is not None
+
+    if args.assignee:
+        if not project_id:
+            print("Error: --assignee requires --project or --project-id to resolve collaborator", file=sys.stderr)
+            sys.exit(1)
+        assignee_id = resolve_assignee(world, project_id, args.assignee)
+        tasks = [t for t in tasks if t.get("assignee_id") == assignee_id]
+    elif is_workspace_project and collabs and not args.team:
+        user = world["user"]
+        my_id = user["id"]
+        if args.unassigned:
+            my_tasks = [t for t in tasks if t.get("assignee_id") is None]
+            excluded = len(tasks) - len(my_tasks)
+            if excluded > 0:
+                print(f"Showing {len(my_tasks)} unassigned tasks of {len(tasks)} total. Use --team for all.",
+                      file=sys.stderr)
+        else:
+            my_tasks = [t for t in tasks if t.get("assignee_id") == my_id]
+            excluded = len(tasks) - len(my_tasks)
+            if excluded > 0:
+                print(f"Showing {len(my_tasks)} of {len(tasks)} tasks (assigned to {user['full_name']}). "
+                      f"Use --unassigned for triage, --team for all.", file=sys.stderr)
+        tasks = my_tasks
+
+    if args.created_before and args.older_than:
+        print("Error: Cannot use both --older-than and --created-before", file=sys.stderr)
+        sys.exit(1)
+
+    if args.created_before or args.older_than:
+        if args.older_than:
+            m = re.match(r"(\d+)([dwm])", args.older_than)
+            if not m:
+                print("Error: --older-than format should be like '30d', '2w', or '3m'", file=sys.stderr)
+                sys.exit(1)
+            num, unit = int(m.group(1)), m.group(2)
+            days = num * {"d": 1, "w": 7, "m": 30}[unit]
+            cutoff = datetime.now() - timedelta(days=days)
+        else:
+            cutoff = datetime.fromisoformat(args.created_before + "T23:59:59")
+        tasks = [t for t in tasks if datetime.fromisoformat(t["created_at"][:19]) < cutoff]
+
+    enriched = []
+    for t in tasks:
+        td = dict(t)
+        aid = td.get("assignee_id")
+        td["assignee_name"] = assignee_map.get(aid) if aid else None
+        td["comments"] = world["comments"].get(t["id"], [])
+        enriched.append(td)
+
+    if args.include_section_name:
+        if not project_id:
+            print("Warning: --include-section-name requires --project to work, ignoring", file=sys.stderr)
+        else:
+            sections = {s["id"]: s["name"] for s in world["sections"].get(project_id, [])}
+            for td in enriched:
+                sid = td.get("section_id")
+                td["section_name"] = sections.get(sid) if sid else None
+
+    output_json(enriched)
+
+
+def cmd_task(world, state_path, args):
+    t = find_task(world, args.id, include_completed=True)
+    if t is None:
+        task_not_found(args.id)
+    td = dict(t)
+    aid = td.get("assignee_id")
+    if aid:
+        collabs = world["collaborators"].get(t["project_id"], [])
+        td["assignee_name"] = {c["id"]: c["name"] for c in collabs}.get(aid)
+    else:
+        td["assignee_name"] = None
+    td["comments"] = world["comments"].get(t["id"], [])
+    output_json(td)
+
+
+def cmd_filter(world, state_path, args):
+    q = args.query.strip()
+    tasks = [t for t in world["tasks"] if t.get("completed_at") is None]
+    today = datetime.now().strftime("%Y-%m-%d")
+    if q.startswith("#"):
+        pid = resolve_project(world, q[1:])
+        result = [t for t in tasks if t["project_id"] == pid]
+    elif q.lower() == "today":
+        result = [t for t in tasks if t.get("due") and t["due"].get("date") and t["due"]["date"] <= today]
+    elif q.lower() == "overdue":
+        result = [t for t in tasks if t.get("due") and t["due"].get("date") and t["due"]["date"] < today]
+    elif q.lower() in ("assigned to: me", "assigned to:me"):
+        result = [t for t in tasks if t.get("assignee_id") == world["user"]["id"]]
+    else:
+        result = []
+    output_json(result)
+
+
+def cmd_done(world, state_path, args):
+    t = find_task(world, args.id)
+    if t is None:
+        task_not_found(args.id)
+    if args.note:
+        existing = (t.get("description") or "").rstrip()
+        t["description"] = f"{existing}\n\n{args.note}" if existing else args.note
+    t["completed_at"] = now_iso()
+    t["updated_at"] = now_iso()
+    world["tasks"].remove(t)
+    world["completed"].append(t)
+    save_state(world, state_path)
+    print(json.dumps({"success": True, "task_id": args.id}))
+
+
+def cmd_delete(world, state_path, args):
+    t = find_task(world, args.id, include_completed=True)
+    if t is None:
+        task_not_found(args.id)
+    if t in world["tasks"]:
+        world["tasks"].remove(t)
+    else:
+        world["completed"].remove(t)
+    save_state(world, state_path)
+    print(json.dumps({"success": True, "task_id": args.id}))
+
+
+def cmd_uncomplete(world, state_path, args):
+    t = find_task(world, args.id, include_completed=True)
+    if t is None:
+        task_not_found(args.id)
+    if t in world["completed"]:
+        world["completed"].remove(t)
+        t["completed_at"] = None
+        world["tasks"].append(t)
+        save_state(world, state_path)
+    print(json.dumps({"success": True, "task_id": args.id}))
+
+
+def cmd_completed(world, state_path, args):
+    completed = list(world["completed"])
+    if args.project:
+        pid = resolve_project(world, args.project)
+        completed = [t for t in completed if t["project_id"] == pid]
+    if args.since:
+        completed = [t for t in completed if t["completed_at"] and t["completed_at"][:10] >= args.since]
+    if args.until:
+        completed = [t for t in completed if t["completed_at"] and t["completed_at"][:10] <= args.until]
+    output_json(completed)
+
+
+def new_task_dict(world, content, project_id, section_id, args):
+    return {
+        "id": mint_id(world),
+        "content": content,
+        "description": args.description or "",
+        "project_id": project_id or world["user"]["inbox_project_id"],
+        "section_id": section_id,
+        "parent_id": getattr(args, "parent_id", None),
+        "labels": args.labels.split(",") if getattr(args, "labels", None) else [],
+        "priority": getattr(args, "priority", None) or 1,
+        "due": ({"date": None, "is_recurring": False, "string": args.due, "datetime": None, "timezone": None}
+                if getattr(args, "due", None) else None),
+        "deadline": None,
+        "duration": None,
+        "assignee_id": None,
+        "assigner_id": None,
+        "creator_id": world["user"]["id"],
+        "created_at": now_iso(),
+        "updated_at": now_iso(),
+        "completed_at": None,
+        "is_collapsed": False,
+        "meta": None,
+        "order": 1 + sum(1 for t in world["tasks"]
+                         if t["project_id"] == (project_id or world["user"]["inbox_project_id"])
+                         and t.get("section_id") == section_id),
+    }
+
+
+def cmd_add(world, state_path, args):
+    project_id = args.project_id
+    if args.project:
+        project_id = resolve_project(world, args.project)
+    section_id = args.section_id
+    if args.section:
+        if not project_id:
+            print("Error: --section requires --project or --project-id", file=sys.stderr)
+            sys.exit(1)
+        section_id = resolve_section(world, project_id, args.section)
+    task = new_task_dict(world, args.content, project_id, section_id, args)
+    world["tasks"].append(task)
+    save_state(world, state_path)
+    output_json(task)
+
+
+def cmd_update(world, state_path, args):
+    project_id = args.project_id
+    if args.project:
+        project_id = resolve_project(world, args.project)
+
+    t = find_task(world, args.id)
+    if t is None:
+        task_not_found(args.id)
+
+    if args.no_section:
+        if args.section or args.section_id:
+            print("Error: --no-section cannot be combined with --section/--section-id", file=sys.stderr)
+            sys.exit(1)
+        if not project_id:
+            project_id = t["project_id"]
+
+    section_id = args.section_id
+    if args.section:
+        resolve_pid = project_id if project_id else t["project_id"]
+        section_id = resolve_section(world, resolve_pid, args.section)
+
+    assignee_id = None
+    if args.assignee:
+        assignee_id = resolve_assignee(world, t["project_id"], args.assignee)
+
+    moved = False
+    if project_id or section_id or args.no_section:
+        if project_id:
+            t["project_id"] = project_id
+        if args.no_section:
+            t["section_id"] = None
+        elif section_id:
+            t["section_id"] = section_id
+        t["order"] = 1  # a move resets order — real API behaviour
+        moved = True
+
+    updated = moved
+    if args.content:
+        t["content"] = args.content
+        updated = True
+    if args.description is not None:
+        t["description"] = args.description
+        updated = True
+    if args.priority:
+        t["priority"] = args.priority
+        updated = True
+    if args.due:
+        t["due"] = {"date": None, "is_recurring": False, "string": args.due, "datetime": None, "timezone": None}
+        updated = True
+    if args.labels:
+        t["labels"] = args.labels.split(",")
+        updated = True
+    if assignee_id is not None:
+        t["assignee_id"] = assignee_id
+        updated = True
+    if args.order is not None:
+        t["order"] = args.order
+        updated = True
+
+    if not updated:
+        print("Error: No update parameters provided", file=sys.stderr)
+        sys.exit(1)
+
+    t["updated_at"] = now_iso()
+    save_state(world, state_path)
+    output_json(t)
+
+
+def cmd_reorder(world, state_path, args):
+    results = []
+    for position, task_id in enumerate(args.ids, start=1):
+        t = find_task(world, task_id)
+        if t is None:
+            if results:
+                print(f"Reordered {len(results)} of {len(args.ids)} tasks before the failure:", file=sys.stderr)
+                for r in results:
+                    print(f"  {r['order']}. {r['task_id']}", file=sys.stderr)
+            task_not_found(task_id)
+        t["order"] = position
+        results.append({"task_id": task_id, "order": position})
+    save_state(world, state_path)
+    print(json.dumps({"success": True, "reordered": results}, indent=2))
+
+
+def cmd_add_section(world, state_path, args):
+    project_id = args.project_id
+    if args.project:
+        project_id = resolve_project(world, args.project)
+    if not project_id:
+        print("Error: --project-id or --project is required for add-section", file=sys.stderr)
+        sys.exit(1)
+    section = {
+        "id": mint_id(world),
+        "name": args.name,
+        "project_id": project_id,
+        "is_collapsed": False,
+        "order": 1 + len(world["sections"].get(project_id, [])),
+    }
+    world["sections"].setdefault(project_id, []).append(section)
+    save_state(world, state_path)
+    output_json(section)
+
+
+def cmd_add_project(world, state_path, args):
+    project = {
+        "id": mint_id(world),
+        "name": args.name,
+        "color": args.color or "charcoal",
+        "created_at": now_iso(),
+        "updated_at": now_iso(),
+        "description": "",
+        "folder_id": None,
+        "is_archived": False,
+        "is_collapsed": False,
+        "is_favorite": bool(args.favorite),
+        "is_inbox_project": False,
+        "is_shared": False,
+        "can_assign_tasks": False,
+        "order": 1 + len(world["projects"]),
+        "parent_id": resolve_project(world, args.parent) if args.parent else None,
+        "view_style": "list",
+        "workspace_id": None,
+    }
+    world["projects"].append(project)
+    save_state(world, state_path)
+    output_json(project)
+
+
+def cmd_update_project(world, state_path, args):
+    pid = resolve_project(world, args.project)
+    p = get_project(world, pid)
+    if not (args.name or args.color or args.favorite is not None):
+        print("Error: No update parameters provided (use --name, --color, or --favorite)", file=sys.stderr)
+        sys.exit(1)
+    if args.name:
+        p["name"] = args.name
+    if args.color:
+        p["color"] = args.color
+    if args.favorite is not None:
+        p["is_favorite"] = args.favorite
+    p["updated_at"] = now_iso()
+    save_state(world, state_path)
+    output_json(p)
+
+
+def cmd_comments(world, state_path, args):
+    if not args.task_id and not args.project_id:
+        print("Error: --task-id or --project-id is required", file=sys.stderr)
+        sys.exit(1)
+    if args.task_id:
+        output_json(world["comments"].get(args.task_id, []))
+    else:
+        output_json([])
+
+
+def cmd_collaborators(world, state_path, args):
+    output_json(world["collaborators"].get(args.project_id, []))
+
+
+def cmd_whoami(world, state_path, args):
+    user = world["user"]
+    if args.json:
+        print(json.dumps(user, indent=2, default=str))
+    else:
+        print(f"{user['full_name']} <{user['email']}> (id: {user['id']})")
+
+
+def cmd_auth(world, state_path, args):
+    if args.status:
+        print("Authenticated: token found and valid.")
+        sys.exit(0)
+    print("Already authenticated. Use --status to check.")
+
+
+def cmd_doctor(world, state_path, args):
+    print("Checking accomplis setup...\n")
+    print("[Python]")
+    v = sys.version_info
+    print(f"  ✓ Python {v.major}.{v.minor}.{v.micro}")
+    print("\n[Dependencies]")
+    print("  ✓ todoist_api_python")
+    print("  ✓ httpx")
+    print("\n[Installation]")
+    print("  ✓ accomplis on PATH")
+    print("\n[Authentication]")
+    print("  ✓ Todoist authenticated")
+    print("\n[Network]")
+    print("  ✓ API connection")
+    print("\n" + "─" * 40)
+    print("All 6 checks passed. Setup looks good!")
+
+
+def cmd_version(world, state_path, args):
+    print("accomplis 1.35.0")
+    print(f"Python {sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}")
+
+
+# ── Parser (mirrors cli.py) ──────────────────────────────────────────────────
+
+def build_parser():
+    parser = argparse.ArgumentParser(
+        description="Todoist CLI - MCP-free interface using official Python SDK")
+    parser.add_argument("--version", "-V", action="version", version="accomplis 1.35.0")
+    sub = parser.add_subparsers(dest="command")
+
+    p = sub.add_parser("auth", help="Authenticate with Todoist")
+    p.add_argument("--token")
+    p.add_argument("--status", action="store_true")
+
+    sub.add_parser("projects", help="List all projects")
+
+    p = sub.add_parser("sections", help="List sections")
+    p.add_argument("--project-id")
+    p.add_argument("--project")
+
+    p = sub.add_parser("tasks", help="List tasks")
+    p.add_argument("--project-id")
+    p.add_argument("--project")
+    p.add_argument("--section-id")
+    p.add_argument("--section")
+    p.add_argument("--label")
+    p.add_argument("--assignee")
+    p.add_argument("--created-before")
+    p.add_argument("--older-than")
+    p.add_argument("--team", action="store_true")
+    p.add_argument("--unassigned", action="store_true")
+    p.add_argument("--include-section-name", action="store_true")
+
+    p = sub.add_parser("task", help="Get a single task")
+    p.add_argument("id")
+
+    p = sub.add_parser("filter", help="Filter tasks using Todoist filter syntax")
+    p.add_argument("query")
+
+    p = sub.add_parser("done", help="Complete a task")
+    p.add_argument("id")
+    p.add_argument("--note")
+
+    p = sub.add_parser("delete", help="Delete a task")
+    p.add_argument("id")
+
+    p = sub.add_parser("uncomplete", help="Uncomplete/reopen a task")
+    p.add_argument("id")
+
+    p = sub.add_parser("completed", help="List completed tasks")
+    p.add_argument("--since")
+    p.add_argument("--until")
+    p.add_argument("--project")
+
+    p = sub.add_parser("add", help="Create a new task")
+    p.add_argument("content")
+    p.add_argument("--description")
+    p.add_argument("--project-id")
+    p.add_argument("--project")
+    p.add_argument("--section-id")
+    p.add_argument("--section")
+    p.add_argument("--parent-id")
+    p.add_argument("--labels")
+    p.add_argument("--priority", type=int, choices=[1, 2, 3, 4])
+    p.add_argument("--due")
+
+    p = sub.add_parser("update", help="Update an existing task")
+    p.add_argument("id")
+    p.add_argument("--content")
+    p.add_argument("--description")
+    p.add_argument("--project-id")
+    p.add_argument("--project")
+    p.add_argument("--section-id")
+    p.add_argument("--section")
+    p.add_argument("--no-section", action="store_true")
+    p.add_argument("--order", type=int)
+    p.add_argument("--labels")
+    p.add_argument("--priority", type=int, choices=[1, 2, 3, 4])
+    p.add_argument("--assignee")
+    p.add_argument("--due")
+
+    p = sub.add_parser("reorder", help="Set task order to the sequence given")
+    p.add_argument("ids", nargs="+")
+
+    p = sub.add_parser("comments", help="Get comments")
+    p.add_argument("--task-id")
+    p.add_argument("--project-id")
+
+    p = sub.add_parser("collaborators", help="Get project collaborators")
+    p.add_argument("--project-id", required=True)
+
+    p = sub.add_parser("add-project", help="Create a new project")
+    p.add_argument("name")
+    p.add_argument("--parent")
+    p.add_argument("--color")
+    p.add_argument("--favorite", action="store_true")
+
+    p = sub.add_parser("update-project", help="Update a project")
+    p.add_argument("project")
+    p.add_argument("--name")
+    p.add_argument("--color")
+    p.add_argument("--favorite", action=argparse.BooleanOptionalAction)
+
+    p = sub.add_parser("add-section", help="Create a new section (outcome)")
+    p.add_argument("name")
+    p.add_argument("--project-id")
+    p.add_argument("--project")
+
+    p = sub.add_parser("whoami", help="Show current authenticated user")
+    p.add_argument("--json", action="store_true")
+
+    sub.add_parser("doctor", help="Check CLI setup and diagnose issues")
+    sub.add_parser("version", help="Show version and commit info")
+
+    return parser
+
+
+HANDLERS = {
+    "auth": cmd_auth,
+    "projects": cmd_projects,
+    "sections": cmd_sections,
+    "tasks": cmd_tasks,
+    "task": cmd_task,
+    "filter": cmd_filter,
+    "done": cmd_done,
+    "delete": cmd_delete,
+    "uncomplete": cmd_uncomplete,
+    "completed": cmd_completed,
+    "add": cmd_add,
+    "update": cmd_update,
+    "reorder": cmd_reorder,
+    "add-project": cmd_add_project,
+    "update-project": cmd_update_project,
+    "add-section": cmd_add_section,
+    "comments": cmd_comments,
+    "collaborators": cmd_collaborators,
+    "whoami": cmd_whoami,
+    "doctor": cmd_doctor,
+    "version": cmd_version,
+}
+
+
+def main():
+    log_invocation()
+    parser = build_parser()
+    args = parser.parse_args()
+    if not args.command:
+        parser.print_help()
+        sys.exit(1)
+    world, state_path = load_state()
+    HANDLERS[args.command](world, state_path, args)
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,20 @@
+name: weekly-review-a
+world: world-a
+prompt: >-
+  Walk me through my weekly review — do a full pass over my system and give me
+  a written summary: what's stale, what's missing, and what needs a decision
+  this week.
+rubric: >-
+  Four issues are planted in this user's system: (1) two STALE waiting-for
+  items in "@Wait" — a Q3 budget confirmation ~46 days old and a conference
+  refund ~75 days old; (2) the outcome "Spoke at two industry events this
+  year" (a section of "Outcomes 2026") has NO tasks — an active outcome with
+  no next action; (3) two unprocessed Inbox items, including "Sana called
+  about a workshop"; (4) a near-duplicate pair — "Update portfolio with the
+  Horizon case study" in @Actions and "Portfolio update for Horizon — see
+  email from Marc" in the Inbox. Score = 0.25 per planted issue caught (the
+  two stale waits together count as one catch). Deduct 0.25 if the review
+  recommends DELETING tasks (GTD practice is complete-with-a-note, not
+  delete). No deduction for extra observations. A review organised in
+  recognisable phases (get clear / get current / get creative, or
+  inbox-then-lists-then-someday) earns +0.1 (cap at 1.0).

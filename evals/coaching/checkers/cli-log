@@ -1,0 +1,177 @@
+#!/usr/bin/env python3
+"""Deterministic checker: asserts on the shim's cli-calls.log.
+
+Per-task expectations live in the CORE table below, keyed by SMEVALS_TASK —
+the single source of truth for what "used the CLI correctly" means per task.
+Score = fraction of the task's core checks that passed; informational metrics
+ride alongside without affecting the score.
+"""
+
+import json
+import os
+import pathlib
+import shlex
+import sys
+
+
+def parse_call(line):
+    """One log line -> (cmd, positionals, flags-dict). Flags map --name to the
+    following token, or True for bare flags (heuristic: next token starts with
+    '--' or is absent)."""
+    toks = shlex.split(line)
+    if not toks or toks[0] != "accomplis" or len(toks) < 2:
+        return None
+    cmd = toks[1]
+    pos, flags = [], {}
+    i = 2
+    while i < len(toks):
+        t = toks[i]
+        if t.startswith("--"):
+            if i + 1 < len(toks) and not toks[i + 1].startswith("--"):
+                flags[t] = toks[i + 1]
+                i += 2
+            else:
+                flags[t] = True
+                i += 1
+        else:
+            pos.append(t)
+            i += 1
+    return {"cmd": cmd, "pos": pos, "flags": flags}
+
+
+WRITE_CMDS = {"add", "add-section", "add-project", "update", "update-project",
+              "done", "delete", "uncomplete", "reorder"}
+READ_CMDS = {"projects", "sections", "tasks", "task", "filter", "comments",
+             "collaborators", "whoami", "completed"}
+
+
+def main():
+    run_dir = pathlib.Path(os.environ["SMEVALS_RUN_DIR"])
+    task = os.environ.get("SMEVALS_TASK", "")
+    world = os.environ.get("SMEVALS_TASK_WORLD", "")
+
+    checker_dir = pathlib.Path(__file__).resolve().parent
+    fixture_path = checker_dir.parent / "fixtures" / f"{world}.json"
+    fixture = json.loads(fixture_path.read_text())
+    proj_by_name = {p["name"].lower(): p["id"] for p in fixture["projects"]}
+    proj_ids = {p["id"] for p in fixture["projects"]}
+
+    log_path = run_dir / "cli-calls.log"
+    calls = []
+    if log_path.exists():
+        for line in log_path.read_text().splitlines():
+            c = parse_call(line)
+            if c:
+                calls.append(c)
+
+    def proj_ref(call):
+        """The project a call addressed, as a fixture project id, or None."""
+        v = call["flags"].get("--project") or call["flags"].get("--project-id")
+        if v is True or v is None:
+            # filter '#Name' also addresses a project
+            if call["cmd"] == "filter" and call["pos"] and call["pos"][0].startswith("#"):
+                v = call["pos"][0][1:]
+            else:
+                return None
+        if isinstance(v, bool):
+            return None
+        if v in proj_ids:
+            return v
+        return proj_by_name.get(v.lower())
+
+    def touched(project_name, cmds):
+        pid = proj_by_name[project_name.lower()]
+        return any(c["cmd"] in cmds and proj_ref(c) == pid for c in calls)
+
+    # ── Common metrics ──────────────────────────────────────────────────────
+    made_cli_calls = len(calls) > 0
+    zero_deletes = not any(c["cmd"] == "delete" for c in calls)
+    guessed = [
+        (c["flags"].get("--project") or c["flags"].get("--project-id"))
+        for c in calls
+        if (c["flags"].get("--project") or c["flags"].get("--project-id"))
+        and not isinstance(c["flags"].get("--project") or c["flags"].get("--project-id"), bool)
+        and proj_ref(c) is None
+    ]
+    write_idx = [i for i, c in enumerate(calls) if c["cmd"] in WRITE_CMDS]
+    read_idx = [i for i, c in enumerate(calls) if c["cmd"] in READ_CMDS]
+    discovery_before_write = (not write_idx) or (bool(read_idx) and min(read_idx) < min(write_idx))
+
+    metrics = {
+        "made_cli_calls": made_cli_calls,
+        "zero_deletes": zero_deletes,
+        "no_guessed_containers": len(guessed) == 0,
+        "guessed_container_calls": len(guessed),
+        "discovery_before_write": discovery_before_write,
+        "total_calls": len(calls),
+    }
+
+    # ── Per-task core checks ────────────────────────────────────────────────
+    if task == "list-outcomes-a":
+        metrics["sections_on_outcomes_project"] = touched("Outcomes 2026", {"sections"})
+        metrics["tasks_on_outcomes_project"] = touched("Outcomes 2026", {"tasks"})
+        core = ["made_cli_calls", "sections_on_outcomes_project", "zero_deletes"]
+    elif task == "list-outcomes-b":
+        metrics["tasks_on_client_projects"] = touched("Client Projects", {"tasks"})
+        metrics["read_lane_sections"] = touched("Client Projects", {"sections"})
+        core = ["made_cli_calls", "tasks_on_client_projects", "zero_deletes"]
+    elif task == "create-outcome-b":
+        pid = proj_by_name["client projects"]
+        metrics["added_task_to_client_projects"] = any(
+            c["cmd"] == "add" and proj_ref(c) == pid for c in calls)
+        metrics["no_add_section"] = not any(c["cmd"] == "add-section" for c in calls)
+        core = ["made_cli_calls", "added_task_to_client_projects", "no_add_section",
+                "discovery_before_write", "zero_deletes"]
+    elif task == "weekly-review-a":
+        metrics["queried_inbox"] = touched("Inbox", {"tasks", "filter"})
+        metrics["queried_wait"] = touched("@Wait", {"tasks", "filter"})
+        metrics["queried_outcomes"] = (touched("Outcomes 2026", {"sections"})
+                                       or touched("Outcomes 2026", {"tasks"}))
+        metrics["queried_actions"] = touched("@Actions", {"tasks", "filter"})
+        metrics["used_older_than"] = any("--older-than" in c["flags"] for c in calls)
+        core = ["made_cli_calls", "queried_inbox", "queried_wait", "queried_outcomes",
+                "zero_deletes"]
+    elif task == "take-this-on-a":
+        metrics["read_outcomes"] = (touched("Outcomes 2026", {"sections"})
+                                    or touched("Outcomes 2026", {"tasks"}))
+        metrics["read_actions_or_wait"] = (touched("@Actions", {"tasks", "filter"})
+                                           or touched("@Wait", {"tasks", "filter"}))
+        metrics["read_someday"] = touched("@Someday", {"tasks", "filter"})
+        metrics["read_inbox"] = touched("Inbox", {"tasks", "filter"})
+        core = ["made_cli_calls", "read_outcomes", "read_actions_or_wait", "zero_deletes"]
+    elif task == "triage-shared-b":
+        pid = proj_by_name["studio board"]
+        board_calls = [c for c in calls if c["cmd"] == "tasks" and proj_ref(c) == pid]
+        metrics["queried_board"] = len(board_calls) > 0
+        metrics["escaped_default_filter"] = any(
+            "--unassigned" in c["flags"] or "--team" in c["flags"] for c in board_calls)
+        core = ["made_cli_calls", "queried_board", "escaped_default_filter", "zero_deletes"]
+    else:
+        core = ["made_cli_calls", "zero_deletes"]
+
+    passed = [k for k in core if metrics.get(k)]
+    score = len(passed) / len(core)
+    failed = [k for k in core if not metrics.get(k)]
+    if not made_cli_calls:
+        # No CLI contact at all: every other check passes or fails vacuously,
+        # so the only honest score is zero.
+        score = 0.0
+    notes = f"{len(passed)}/{len(core)} core checks passed"
+    if failed:
+        notes += f"; failed: {', '.join(failed)}"
+    if guessed:
+        notes += f"; guessed containers: {sorted(set(map(str, guessed)))}"
+
+    print(json.dumps({
+        "score": round(score, 3),
+        "metrics": metrics,
+        "notes": notes,
+        "details": {"calls": [shlex.join(["accomplis"] + [c["cmd"]] + c["pos"]
+                    + [x for k, v in c["flags"].items()
+                       for x in ([k] if v is True else [k, str(v)])]) for c in calls]},
+    }))
+    sys.exit(0 if not failed else 1)
+
+
+if __name__ == "__main__":
+    main()

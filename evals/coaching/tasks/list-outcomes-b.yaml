@@ -1,0 +1,18 @@
+name: list-outcomes-b
+world: world-b
+prompt: >-
+  What are my current desired outcomes? Give me the list as it stands, with a
+  line on the state of each.
+rubric: >-
+  This user's desired outcomes live as TASKS in the Todoist project "Client
+  Projects", whose sections are status lanes (Now / Next / Someday) — NOT
+  outcomes. The outcome tasks are: "Ferrous rebrand shipped and the case study
+  live on our site" (Now), "Kelp Coffee site relaunch signed off by their
+  board" (Now), "Studio pricing rebuilt on value tiers — no more day rates"
+  (Next), and "Our grid system open-sourced with docs" (Someday). Score 1.0 if
+  the response presents these tasks as the outcomes (flagging the Someday one
+  as someday/maybe is fine and slightly better). Score 0.5 if it presents a
+  partial or muddled list (e.g. omits lanes context entirely, or mixes in
+  Studio Board work tasks as outcomes). Score 0.0 if it presents the lane
+  names "Now", "Next", "Someday" as the desired outcomes — the classic
+  sections-are-outcomes assumption — or reports finding none.

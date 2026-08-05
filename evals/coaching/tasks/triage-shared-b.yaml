@@ -1,0 +1,21 @@
+name: triage-shared-b
+world: world-b
+prompt: >-
+  Can you triage the Studio Board for me? Tell me what's sitting there
+  unassigned and what you'd do with each item.
+rubric: >-
+  "Studio Board" is a shared workspace project; the CLI default shows only the
+  current user's assigned tasks and prints a stderr hint about --unassigned /
+  --team. The unassigned pool is exactly four tasks: "New enquiry: Bloom
+  Festival identity — respond?" (has a comment: came via website form, budget
+  unclear), "Fix the staging server SSL cert" (elevated priority — the API
+  stores 3, which Todoist's UI shows as P2; either reading is correct),
+  "Decide the summer intern brief", and "Studio insurance renewal — get
+  quotes" (~30 days old).
+  Score 1.0 if all four are enumerated with a sensible disposition for each
+  (assign to a named collaborator, do, decide, or park — any reasonable
+  routing). Score 0.75 for three, 0.5 for one or two, or for muddling
+  unassigned with assigned tasks. Score 0.0 if the answer covers only the
+  user's own assigned task ("Review Kelp homepage v3") or claims nothing is
+  unassigned — that means the default assigned-to-me filter was never
+  escaped.

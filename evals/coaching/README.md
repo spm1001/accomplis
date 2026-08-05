@@ -1,0 +1,48 @@
+# Coaching skill eval
+
+Measures whether the accomplis **coaching skill** makes a blank-slate Claude discover a user's actual GTD structure before acting — and coach in achievement language — compared with the same Claude given only the CLI. Built with [smevals](https://github.com/prime-radiant-inc/smevals); the with/without-skill delta IS the eval.
+
+## What it can and cannot tell you
+
+**Measures: efficacy.** Does the skill's *content* improve behaviour, given that it loaded? The inner Claude runs behind the ardoise isolation wall (no CLAUDE.md, no shards, no plugins), so the `skill` config injects SKILL.md into the prompt directly.
+
+**Does not measure: routing.** Whether a real session with the full user config *invokes* `Skill(coaching)` unprompted is exactly the property the isolation wall strips (the always-loaded `rules/accomplis.md` shard never exists inside ardoise). Routing is verified separately — a driven interactive session (hublot) or a real teammate rollout session. Don't let a green here stand in for that.
+
+## Anatomy
+
+| Piece | What it does |
+|---|---|
+| `fixtures/world-a.json` | Sections-as-outcomes layout ("Outcomes 2026"), `@` prefix contexts. Planted: 2 stale waits, an outcome with no next action, a near-duplicate pair, 2 inbox items. |
+| `fixtures/world-b.json` | Lanes layout — outcomes are TASKS in "Client Projects" (sections are Now/Next/Someday), `&` prefixes, plus a shared workspace project with a 4-task unassigned pool. |
+| `shim/accomplis` | Stateful fixture CLI impersonating the real one (stdlib python3 — the wall has no uv). Mirrors output shapes, stderr info lines, error texts + the "STOP: load the skill" nudge; logs every argv to `cli-calls.log`; writes mutate per-run state so read-backs work. Timestamp placeholders (`{{DAYS_AGO:n}}`) resolve at state init so staleness stays stable forever. |
+| `runner-core.sh` + `run-bare`/`run-skill` | smevals configs can't pass keys to runners, so the config axis is the choice of wrapper. Both get a one-line CLI affordance; `skill` additionally gets SKILL.md verbatim with its real base directory (reference files load from disk, as in a real session). Needs ardoise with `--env`/`--path-prepend` (trousse, 2026-08-05). |
+| `checkers/cli-log` | Deterministic checks on the call log, expectations keyed by task name inside the script. Also counts `guessed_container_calls` — queries naming projects that don't exist (assumption-driven behaviour, quantified). No CLI contact at all scores 0. |
+| `checkers/judge` | LLM judge (blank-slate via ardoise, so estate conventions can't colour grading) scoring `output.txt` against the task's `rubric:` key. |
+
+Two graders per run: `default` (deterministic, cheap) and `judge` (LLM), side by side per the smevals design.
+
+## The fixtures deliberately mismatch the skill's examples
+
+World A's outcomes project is *not* called "Desired Outcomes"; world B breaks the sections-are-outcomes assumption entirely. A model that pattern-matches the skill's own examples instead of discovering the layout fails `list-outcomes-b` (reporting Now/Next/Someday as "outcomes") and `create-outcome-b` (minting a section on a lanes board).
+
+## Running
+
+```bash
+cd evals/coaching
+smevals run . -c bare  -g      # every task, bare config, deterministic-graded
+smevals run . -c skill -g
+smevals grade . -g judge       # LLM judge over all ungraded runs
+smevals report .               # config × model leaderboard
+smevals report . -g judge --by-task
+smevals run . -c bare -n 5 -g  # top up to 5 runs/task for mean ± stderr
+```
+
+Costs real tokens: each run is an inner `claude -p` session (~1 min, ~5-8 CLI calls), each judge one short call. 6 tasks × 2 configs × n runs.
+
+After editing a rubric or checker: `smevals grade . -g judge --regrade`.
+
+## Caveats
+
+- **Bare is not zero-affordance:** the bare config still names the CLI in the prompt (a user who installed accomplis but has no skill). A true nothing baseline would trivially score 0 and measure nothing.
+- The shim's `filter` supports only `#Project` / `today` / `overdue` / `assigned to: me`; exotic filter syntax returns `[]` silently. If runs show heavy filter use, extend the shim before reading those results.
+- The CLI's own stderr hints teach ("Use --unassigned for triage") — observed doing exactly that in the first bare smoke run. That's signal, not noise: it shows which behaviours the CLI already affords without the skill.

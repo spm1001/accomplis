@@ -1,0 +1,15 @@
+name: list-outcomes-a
+world: world-a
+prompt: >-
+  What are my current desired outcomes? Give me the list as it stands, with a
+  line on the state of each.
+rubric: >-
+  This user's desired outcomes live as SECTIONS of the Todoist project
+  "Outcomes 2026". There are exactly three: (1) "Landed the Horizon Health
+  retainer", (2) "Pricing pages ship without me in the loop", (3) "Spoke at two
+  industry events this year". Score 1.0 if the response presents exactly these
+  three as the desired outcomes (wording may vary slightly) — bonus-neutral
+  whether it also notes the third has no next actions. Score 0.5 if it mixes
+  the outcomes with individual tasks at the same level, or presents only some
+  of them. Score 0.0 if it presents something else as the outcomes (next
+  actions, context-project tasks, project names) or says it could not find any.

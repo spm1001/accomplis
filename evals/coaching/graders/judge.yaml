@@ -1,0 +1,6 @@
+name: judge
+checks:
+  - checker: ../checkers/judge
+    model: sonnet
+scoring:
+  pass_threshold: 0.6

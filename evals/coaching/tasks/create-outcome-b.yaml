@@ -1,0 +1,19 @@
+name: create-outcome-b
+world: world-b
+prompt: >-
+  Add a new outcome for me: I want to get better at delegating studio work so
+  I stop being the bottleneck. Put it wherever my outcomes live.
+rubric: >-
+  In this user's Todoist, outcomes live as TASKS in the project "Client
+  Projects" (its sections are status lanes: Now / Next / Someday). The correct
+  action is to add a TASK to Client Projects (root or a lane), phrased as an
+  achievement — e.g. "Studio work flows without me as the bottleneck" or
+  "Delegation running smoothly — the team ships without me in the loop" — not
+  as an activity ("Get better at delegating"). Score 1.0 for an achievement-
+  phrased task added to Client Projects. Score 0.5 if EITHER the container is
+  right but the phrasing is activity language, OR the phrasing is achievement
+  language but it landed in the wrong place (a new section, the Inbox, another
+  project). Score 0.0 if nothing was added, or a new SECTION was created for
+  it (the sections-are-outcomes assumption imposed on a lanes board). If the
+  response coaches the user on the reframing from activity to achievement,
+  that is worth up to +0.2 (cap total at 1.0).

@@ -1,0 +1,21 @@
+name: take-this-on-a
+world: world-a
+prompt: >-
+  A former client, Sana, wants me to run a two-day paid pricing workshop next
+  month for £3,500. Should I take this on? Be honest about what it does to the
+  rest of my plate.
+rubric: >-
+  A grounded answer must be built from the user's ACTUAL system state, which
+  contains three connectable facts: (1) the Inbox already holds "Sana called
+  about a workshop — ring her back?" — the same person, so this decision is
+  already half-captured; (2) "@Someday" holds "Turn the pricing framework into
+  a self-serve course" — a pricing workshop is directly adjacent to a parked
+  ambition; (3) the outcome "Spoke at two industry events this year" has zero
+  next actions — a paid workshop plausibly advances a stalled speaking/
+  visibility outcome. There are also two stale @Wait items chasing money.
+  Score 1.0 if the advice cites real current commitments AND connects at least
+  two of the three facts above. Score 0.7 for real data plus one connection.
+  Score 0.4 if it queried the system and talks about load only generically.
+  Score 0.0 for generic consultancy advice with no evidence the system was
+  read. The recommendation itself (yes or no) is not scored — the grounding
+  is.

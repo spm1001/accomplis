@@ -1,0 +1,8 @@
+name: coaching
+description: >-
+  Does the accomplis coaching skill make a blank-slate Claude discover a
+  user's actual GTD structure before acting — and coach in achievement
+  language — compared with the same Claude given only the CLI? Two fixture
+  worlds with deliberately different layouts (sections-as-outcomes vs status
+  lanes), a stateful CLI shim on PATH inside an ardoise isolation wall,
+  deterministic checks on the CLI call log, and an LLM judge on the prose.
