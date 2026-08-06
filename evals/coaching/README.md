@@ -54,6 +54,7 @@ Current as of that evening's runs (sonnet n≈5, opus/fable n=3, honest judge); 
 
 ## Caveats
 
+- **Control-test the judge like the checkers.** Hand a known-rich, fixture-accurate answer to any new rubric or judge prompt before trusting its scores — the first judge here zeroed correct answers as "fabrication" because it read the rubric as exhaustive, and the bias was caught by hand-reading, not by design.
 - **Bare is not zero-affordance:** the bare config still names the CLI in the prompt (a user who installed accomplis but has no skill). A true nothing baseline would trivially score 0 and measure nothing.
 - The shim's `filter` supports only `#Project` / `today` / `overdue` / `assigned to: me`; exotic filter syntax returns `[]` silently. If runs show heavy filter use, extend the shim before reading those results.
 - The CLI's own stderr hints teach ("Use --unassigned for triage") — observed doing exactly that in the first bare smoke run. That's signal, not noise: it shows which behaviours the CLI already affords without the skill.
