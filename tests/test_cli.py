@@ -61,29 +61,37 @@ def paginated(*items):
 
 class TestGetCurrentUser:
     @patch("accomplis.token_store.get_token", return_value="test-token")
-    @patch("httpx.get")
-    def test_returns_user_dict(self, mock_get, mock_token):
-        from accomplis.common import get_current_user
+    def test_returns_user_dict(self, mock_token):
+        # Inject via the client seam, not by patching httpx.get — a patch that
+        # stops matching the implementation silently degrades into a real
+        # network call (it did, when get_current_user moved to _build_client).
+        import httpx
 
-        mock_response = MagicMock()
-        mock_response.json.return_value = {
-            "id": "123",
-            "full_name": "Test User",
-            "email": "test@example.com",
-        }
-        mock_response.raise_for_status = MagicMock()
-        mock_get.return_value = mock_response
+        from accomplis import common
 
-        user = get_current_user()
+        requests = []
+
+        def handler(request):
+            requests.append(request)
+            return httpx.Response(
+                200,
+                json={
+                    "id": "123",
+                    "full_name": "Test User",
+                    "email": "test@example.com",
+                },
+            )
+
+        stub = httpx.Client(transport=httpx.MockTransport(handler))
+        with patch.object(common, "_build_client", return_value=stub):
+            user = common.get_current_user()
 
         assert user["id"] == "123"
         assert user["full_name"] == "Test User"
         assert user["email"] == "test@example.com"
-        mock_get.assert_called_once_with(
-            "https://api.todoist.com/api/v1/user",
-            headers={"Authorization": "Bearer test-token"},
-            timeout=30,
-        )
+        assert len(requests) == 1
+        assert str(requests[0].url) == "https://api.todoist.com/api/v1/user"
+        assert requests[0].headers["Authorization"] == "Bearer test-token"
 
     @patch("accomplis.token_store.get_token", return_value="bad-token")
     @patch("httpx.get")

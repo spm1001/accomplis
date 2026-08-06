@@ -20,6 +20,87 @@ DEFAULT_TIMEOUT = 30  # seconds
 RATE_LIMIT_DELAY = 0.2  # seconds between API calls
 RATE_LIMIT_RETRY_DELAY = 5  # seconds to wait after 429
 MAX_RETRIES = 3
+RETRY_BACKOFF_BASE = 1.0  # seconds; doubles per retry, plus jitter
+RETRY_AFTER_CAP = 30  # seconds; ceiling on server-requested Retry-After waits
+
+# Which (method, status) pairs are safe to replay. 429 and 503 mean the request
+# was rejected before processing (rate limit / load shedding), so any method can
+# retry. 500/502/504 can arrive after the origin processed the request — a
+# replayed POST there could double-create a task — so only idempotent methods
+# retry on those.
+_RETRY_ANY_METHOD = {429, 503}
+_RETRY_IDEMPOTENT_ONLY = {500, 502, 504}
+_IDEMPOTENT_METHODS = {"GET", "HEAD", "OPTIONS", "PUT", "DELETE"}
+
+
+def _should_retry(method: str, status: int) -> bool:
+    if status in _RETRY_ANY_METHOD:
+        return True
+    return status in _RETRY_IDEMPOTENT_ONLY and method.upper() in _IDEMPOTENT_METHODS
+
+
+def _retry_wait(retry_after: str | None, backoff: float) -> float:
+    """Server-directed wait when Retry-After is present (capped), else backoff+jitter."""
+    import random
+
+    if retry_after:
+        try:
+            return min(float(retry_after), RETRY_AFTER_CAP)
+        except ValueError:
+            pass  # HTTP-date form or garbage — fall back to backoff
+    return backoff + random.uniform(0, backoff / 2)
+
+
+def make_retry_transport(inner=None, sleep=time.sleep):
+    """
+    httpx transport that retries transient Todoist failures (tgt-radaji).
+
+    httpx.HTTPTransport(retries=N) only retries CONNECTION errors; an HTTP 503
+    sails straight through to raise_for_status() in the SDK. This wraps it with
+    status-code retries: MAX_RETRIES attempts after the first, exponential
+    backoff with jitter, honouring Retry-After. 4xx (bar 429) never retries —
+    a 401 must fail loudly and fast.
+
+    `inner` and `sleep` are injectable for tests (stub transport, no real waits).
+    """
+    import httpx
+
+    class _RetryTransport(httpx.BaseTransport):
+        def __init__(self):
+            self._inner = inner or httpx.HTTPTransport(retries=MAX_RETRIES)
+
+        def handle_request(self, request):
+            request.read()  # materialise the body so a replay resends it
+            backoff = RETRY_BACKOFF_BASE
+            for attempt in range(MAX_RETRIES + 1):
+                response = self._inner.handle_request(request)
+                if attempt == MAX_RETRIES or not _should_retry(
+                    request.method, response.status_code
+                ):
+                    return response
+                wait = _retry_wait(response.headers.get("Retry-After"), backoff)
+                response.close()
+                print(
+                    f"  ⏳ Todoist {response.status_code} on {request.method} "
+                    f"{request.url.path} — retry {attempt + 1}/{MAX_RETRIES} "
+                    f"in {wait:.1f}s",
+                    file=sys.stderr,
+                )
+                sleep(wait)
+                backoff *= 2
+            return response  # unreachable; loop always returns
+
+        def close(self):
+            self._inner.close()
+
+    return _RetryTransport()
+
+
+def _build_client():
+    """httpx.Client with timeout, connection retries, and transient-status retries."""
+    import httpx
+
+    return httpx.Client(timeout=DEFAULT_TIMEOUT, transport=make_retry_transport())
 
 
 def get_api():
@@ -40,15 +121,9 @@ def get_api():
             sys.exit(1)
 
     from accomplis.token_store import get_token
-    import httpx
 
     token = get_token()
-
-    # Configure httpx client with timeout and retry (v4 SDK uses httpx)
-    transport = httpx.HTTPTransport(retries=MAX_RETRIES)
-    client = httpx.Client(timeout=DEFAULT_TIMEOUT, transport=transport)
-
-    return TodoistAPI(token, client=client)
+    return TodoistAPI(token, client=_build_client())
 
 
 def get_current_user() -> dict:
@@ -59,14 +134,13 @@ def get_current_user() -> dict:
     Returns dict with id, full_name, email, and other user fields.
     """
     from accomplis.token_store import get_token
-    import httpx
 
     token = get_token()
-    resp = httpx.get(
-        "https://api.todoist.com/api/v1/user",
-        headers={"Authorization": f"Bearer {token}"},
-        timeout=DEFAULT_TIMEOUT,
-    )
+    with _build_client() as client:
+        resp = client.get(
+            "https://api.todoist.com/api/v1/user",
+            headers={"Authorization": f"Bearer {token}"},
+        )
     resp.raise_for_status()
     return resp.json()
 
