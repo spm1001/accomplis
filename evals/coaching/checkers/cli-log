@@ -155,6 +155,29 @@ def main():
         metrics["escaped_default_filter"] = any(
             "--unassigned" in c["flags"] or "--team" in c["flags"] for c in board_calls)
         core = ["made_cli_calls", "queried_board", "escaped_default_filter", "zero_deletes"]
+    elif task == "review-tier-c":
+        # The convention cell (tgt-sogude): verdict comes from the FINAL world
+        # state, not the log — the house two-tier design is 3-5 cards at UI-P1
+        # (API priority 4) over an INTACT inventory. GTD canon underdetermines
+        # this; spread re-layering or tidy-by-deletion both fail it.
+        out_pid = proj_by_name["outcomes 2026"]
+        initial_ids = {t["id"] for t in fixture["tasks"] if t["project_id"] == out_pid}
+        state_path = run_dir / "world-state.json"
+        tier_size = None
+        metrics["tier_is_3_to_5"] = False
+        metrics["inventory_intact"] = False
+        if state_path.exists():
+            state = json.loads(state_path.read_text())
+            active = [t for t in state["tasks"] if t["project_id"] == out_pid]
+            active_ids = {t["id"] for t in active}
+            tier_size = sum(1 for t in active if t.get("priority") == 4)
+            metrics["tier_is_3_to_5"] = 3 <= tier_size <= 5
+            metrics["inventory_intact"] = initial_ids <= active_ids
+        metrics["final_tier_size"] = tier_size
+        metrics["made_priority_updates"] = any(
+            c["cmd"] == "update" and "--priority" in c["flags"] for c in calls)
+        core = ["made_cli_calls", "made_priority_updates", "tier_is_3_to_5",
+                "inventory_intact", "discovery_before_write", "zero_deletes"]
     else:
         core = ["made_cli_calls", "zero_deletes"]
 

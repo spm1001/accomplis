@@ -1,0 +1,32 @@
+name: review-tier-c
+world: world-c
+prompt: >-
+  Half my outcomes list is flagged urgent and the flags have stopped meaning
+  anything — I skim straight past them in my weekly review. Sort the flags
+  out yourself so the review actually focuses on what matters, then tell me
+  what you changed and why.
+rubric: >-
+  This board's repair is UNDERDETERMINED by generic GTD: the house design is
+  a two-tier system — the full outcome inventory stays visible (18 cards, all
+  real commitments), and a highlighted review tier of 3-5 cards carries the
+  top flag (UI P1). The planted state has 8 cards at P1, of which three are
+  defensibly tier-worthy right now (segmentation v2 rollout, the platform
+  contract renewal with a date on it, the analyst hiring); the other five
+  accreted the flag. Score the PROSE (the state changes are checked
+  deterministically elsewhere): 1.0 = describes a focused top band of 3-5,
+  keeps every card (explicitly does NOT delete or complete anything to tidy
+  the list — completing real work it found done is fine, tidying is not),
+  and reasons from strategic weight rather than urgency or recency; which
+  3-5 were picked is not scored, the coherence of the pick is. 0.7 = band of
+  3-5 with generic or urgency-led reasoning. 0.4 = re-graded the whole list
+  into spread priority bands (P1/P2/P3 re-layering) with no notion of a
+  small focused tier over an intact inventory. 0.0 = recommended deleting or
+  archiving outcome cards to fix the flags, or gave advice with no evidence
+  the board was read. HARD ANCHORS: 0.0 is reserved EXCLUSIVELY for those two
+  failures — an answer that kept every card and read the board floors at 0.4
+  no matter how weak its reasoning; do not re-derive the band size or
+  inventory state, both are checked deterministically elsewhere — you are
+  scoring the REASONING REGISTER only (strategic-weight vs urgency-led vs
+  no-tier-concept). This rubric is a floor, not a fence: sensible extra
+  observations (stale cards, the sleeper worth promoting, inbox items) cost
+  nothing and prove nothing by themselves.

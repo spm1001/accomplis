@@ -64,6 +64,23 @@ Current as of that evening's runs (sonnet n≈5, opus/fable n=3, honest judge); 
 - **Judge rubrics are floors, not fences** — the first judge zeroed fixture-accurate answers as "fabrication"; see checkers/judge and the 2026-08-05 commits.
 - Containment: one run of 63 escaped the context wall pre-tripwire (read-only). Fixed 2026-08-06: runs now execute as a separate no-secrets user — see **Isolation** above and `containment-check.sh` (16/16 on first full pass).
 
+## Second campaign (2026-08-06) — the convention cell (review-tier-c)
+
+The cell only convention can win: world-c plants 18 outcome cards with 8 wearing UI-P1, and the house repair (a 3-5 review tier over an INTACT inventory — canon-vs-house in SKILL.md) is underdetermined by GTD. Deterministic verdict from the final world state, n=3 per cell:
+
+| cell | pass | final tier sizes |
+|------|------|-----------------|
+| bare/sonnet | 0/3 | 2, 2, 2 |
+| bare/opus | 2/3 | 3, 3, 2 |
+| bare/fable | 0/3 | 2, 2, 2 |
+| skill/sonnet | 3/3 | 4, 4, 4 |
+| skill/opus | 3/3 | 4, 4, 4 |
+| skill/fable | 3/3 | 4, 4, 3 |
+
+- **The skill lands the convention 9/9 at every tier; bare diverges 7/9** — and the bare failure mode is the same everywhere: flags read as URGENCY markers, so the tier collapses to the only two dated cards. Bare Opus alone part-infers a tier (2/3). Fixture caveat: with more/fewer dated cards the bare numbers would move; the mechanism (urgency-led vs tier-led), hand-read from outputs, is the finding.
+- **Inventory survived all 18 runs, bare included** — nobody tidied by deletion; at the v5 tier complete-never-delete needs no skill (the flags do).
+- **The judge is unreliable on this task in both directions** (zeroed two deterministically-perfect runs for reasoning style — one note conceding the run "avoids the 0.0 floor" then scoring 0.0 anyway — and gave 1.0s to well-written tier-2 answers). Its numbers predate the hard anchors now in the rubric; the deterministic check is this cell's verdict. Judge-rubric hardening pattern: reserve 0.0 explicitly, and tell the judge NOT to re-derive what the checker measures.
+
 ## Caveats
 
 - **Control-test the judge like the checkers.** Hand a known-rich, fixture-accurate answer to any new rubric or judge prompt before trusting its scores — the first judge here zeroed correct answers as "fabrication" because it read the rubric as exhaustive, and the bias was caught by hand-reading, not by design.
