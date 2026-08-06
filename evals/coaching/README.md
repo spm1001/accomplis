@@ -41,6 +41,18 @@ Costs real tokens: each run is an inner `claude -p` session (~1 min, ~5-8 CLI ca
 
 After editing a rubric or checker: `smevals grade . -g judge --regrade`.
 
+## Isolation (tgt-wisuwe)
+
+Two walls, doing different jobs. **ardoise is context isolation** — no CLAUDE.md, no skills, no plugins — and it is not a security boundary: on 2026-08-05 one run of 63 escaped it and answered from the real Todoist board. **Credential isolation is the kernel's**: by default the runner now executes the inner Claude as a separate user (`mitester` on tube) that cannot read `/home/modha` (mode 700) at all — no real accomplis token, no session transcripts, no estate. The runner stages fixture/shim/skill into the eval user's home, crosses with `sudo -n`, and copies `cli-calls.log` / `world-state.json` back.
+
+Knobs (env): `EVAL_ISOLATION=none` (dev escape hatch, unwalled), `EVAL_USER` (default `mitester`), `EVAL_SHIM_DIR` (point at `shim-sabotage/` for containment tests), `EVAL_KEEP=1` (retrieve the inner session transcript as `inner-transcript.jsonl` for forensics).
+
+Billing on the far side: if the caller is on Vertex, the runner passes the Vertex config through but swaps ADC for the eval user's **own scoped service-account key** (`eval-mitester@itv-mit-llm-sameer`, `roles/aiplatform.user` on the pot only — model calls, no data). Never copy a broad ADC across the wall. If the key needs re-minting: `gcloud iam service-accounts keys create` for that SA, install at `/home/mitester/.config/gcloud/eval-vertex-sa.json`, mode 600, owner mitester. Off Vertex, the inner claude uses mitester's own `~/.claude/.credentials.json` login.
+
+**`./containment-check.sh [MODEL]` is the falsifier — run it after any change to the runner, ardoise, or provisioning.** Kernel denial probes (with a known-positive control), leak markers derived from the live board at check time (never committed), a synthetic-positive proving the leak grep can fire, a sabotaged batch (shim errors on every call — outputs must report failure and carry zero markers), and a happy-path run (isolation must not break the eval). A sabotage run counts as evidence only if `cli-calls.log` shows the shim was invoked — on the first live run a harness auth failure passed both greps vacuously, and that gate is the fix.
+
+Honest residuals: the inner session necessarily holds *some* model-billing credential (the scoped SA key, or mitester's own claude login) and network egress is not blocked — the wall protects the estate's data and credentials, not the fixture contents, and a run can still spend pot money. Context isolation, credential isolation; not an airgap.
+
 ## First campaign (2026-08-05) — headline results
 
 Current as of that evening's runs (sonnet n≈5, opus/fable n=3, honest judge); regenerate reports from `runs/` for anything load-bearing.
@@ -50,7 +62,7 @@ Current as of that evening's runs (sonnet n≈5, opus/fable n=3, honest judge); 
 - **Economy is universal** — the skill cuts CLI calls ~33–40% for every model (fable 10.4→6.6, sonnet 14.7→8.6, opus 16.1→10.8).
 - **Attention-narrowing is real and capability-graded** — skill-Sonnet read the Inbox in 0% of take-this-on runs (bare: 100%); skill-Opus and skill-Fable kept sweeping (100%). Fixed by moving the grounding method INTO SKILL.md (0%→80%); the same text in PATTERNS.md changed nothing — residence beats richness, measured.
 - **Judge rubrics are floors, not fences** — the first judge zeroed fixture-accurate answers as "fabrication"; see checkers/judge and the 2026-08-05 commits.
-- Containment: one run of 63 escaped the context wall pre-tripwire (read-only); see the tripwire in runner-core.sh and the credential-isolation follow-up on the board.
+- Containment: one run of 63 escaped the context wall pre-tripwire (read-only). Fixed 2026-08-06: runs now execute as a separate no-secrets user — see **Isolation** above and `containment-check.sh` (16/16 on first full pass).
 
 ## Caveats
 
