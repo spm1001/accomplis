@@ -43,6 +43,7 @@ import sys
 from datetime import datetime, timedelta
 from typing import Any
 
+from accomplis import _invlog
 from accomplis.common import (
     get_api,
     get_current_user,
@@ -695,6 +696,23 @@ def cmd_version(args):
 
 
 def main():
+    """Main CLI entry point: invocation logging around the real main.
+
+    Every invocation — success and failure alike — appends one caller-stamped
+    JSONL line via the vendored shim (src/accomplis/_invlog.py; canonical copy
+    and cross-estate conformance test live in spm1001/harness-ergonomics).
+    Logging is best-effort: a broken log path never breaks the CLI (erg-tebapi).
+    """
+    from importlib.metadata import version as pkg_version, PackageNotFoundError
+    try:
+        v = pkg_version("accomplis")
+    except PackageNotFoundError:
+        v = "0.0.0"
+    with _invlog.capture("accomplis", v) as inv:
+        _main(inv)
+
+
+def _main(inv):
     from importlib.metadata import version as pkg_version
     parser = argparse.ArgumentParser(
         description="Todoist CLI - MCP-free interface using official Python SDK",
@@ -812,6 +830,7 @@ def main():
     subparsers.add_parser("version", help="Show version and commit info")
 
     args = parser.parse_args()
+    inv.note(subcommand=args.command, parsed=args)
 
     if not args.command:
         parser.print_help()

@@ -460,6 +460,27 @@ def cmd_flatten(args):
 
 
 def main():
+    """Entry point: invocation logging around the real main.
+
+    accomplis-flatten is its own console script, so it logs under its own
+    tool name (a separate ~/.local/share/accomplis-flatten/ log) via the same
+    vendored shim as the accomplis CLI (src/accomplis/_invlog.py; canonical
+    copy and conformance test: spm1001/harness-ergonomics). Best-effort:
+    a broken log path never breaks the CLI (erg-tebapi).
+    """
+    from importlib.metadata import version as pkg_version, PackageNotFoundError
+
+    from accomplis import _invlog
+
+    try:
+        v = pkg_version("accomplis")
+    except PackageNotFoundError:
+        v = "0.0.0"
+    with _invlog.capture("accomplis-flatten", v) as inv:
+        _main(inv)
+
+
+def _main(inv):
     parser = argparse.ArgumentParser(
         description="Flatten subtasks into parent task descriptions",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -492,6 +513,15 @@ Use --delete-subtasks for permanent removal (default: complete, which preserves 
                         help="List available backup files")
 
     args = parser.parse_args()
+    # No subparsers here — derive the mode the dispatch below will take, in
+    # dispatch order, so the log's subcommand field stays meaningful.
+    if args.list_backups:
+        mode = "list-backups"
+    elif args.restore:
+        mode = "restore"
+    else:
+        mode = "flatten"
+    inv.note(subcommand=mode, parsed=args)
 
     # Handle --list-backups
     if args.list_backups:
