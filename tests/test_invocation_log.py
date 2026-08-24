@@ -95,6 +95,35 @@ class TestInvocationLog:
         assert "Traceback" not in result.stderr
 
 
+class TestTokenNeverLogged:
+    """auth --token carries a live credential on argv — the log must hold
+    [REDACTED] in both argv and parsed, in both argument spellings.
+    (Essayeur finding on erg-tebapi, proven with this synthetic positive.)"""
+
+    TOKEN = "FAKE-TEST-TOKEN-1234567890"
+
+    def _assert_redacted(self, tmp_path):
+        log = tmp_path / "xdg" / "accomplis" / "invocations.jsonl"
+        raw = log.read_text()
+        assert self.TOKEN not in raw, "credential leaked into invocation log"
+        (line,) = [json.loads(l) for l in raw.splitlines() if l.strip()]
+        assert line["subcommand"] == "auth"
+        assert line["parsed"]["token"] == "[REDACTED]"
+        assert any("[REDACTED]" in a for a in line["argv"])
+
+    def test_token_redacted_separate_arg(self, tmp_path):
+        env = _env(tmp_path, CLAUDECODE="1", HOME=str(tmp_path / "home"))
+        result = _run("accomplis.cli", "auth", "--token", self.TOKEN, env=env)
+        assert result.returncode == 0, result.stderr
+        self._assert_redacted(tmp_path)
+
+    def test_token_redacted_equals_form(self, tmp_path):
+        env = _env(tmp_path, CLAUDECODE="1", HOME=str(tmp_path / "home"))
+        result = _run("accomplis.cli", "auth", f"--token={self.TOKEN}", env=env)
+        assert result.returncode == 0, result.stderr
+        self._assert_redacted(tmp_path)
+
+
 class TestFlattenInvocationLog:
     """accomplis-flatten is a second console script in this package — it logs
     under its own tool name so per-binary denominators stay clean."""

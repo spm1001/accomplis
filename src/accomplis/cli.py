@@ -830,7 +830,16 @@ def _main(inv):
     subparsers.add_parser("version", help="Show version and commit info")
 
     args = parser.parse_args()
-    inv.note(subcommand=args.command, parsed=args)
+    # Never let a credential reach the invocation log. `auth --token TOKEN`
+    # arrives in raw argv AND parsed; the log would be the weakest copy of a
+    # token the store keeps in Keychain/0600 (essayeur finding, erg-tebapi).
+    tok = getattr(args, "token", None)
+    if tok:
+        inv.argv = [a.replace(tok, "[REDACTED]") for a in inv.argv]
+        inv.note(subcommand=args.command,
+                 parsed={**vars(args), "token": "[REDACTED]"})
+    else:
+        inv.note(subcommand=args.command, parsed=args)
 
     if not args.command:
         parser.print_help()

@@ -513,8 +513,10 @@ Use --delete-subtasks for permanent removal (default: complete, which preserves 
                         help="List available backup files")
 
     args = parser.parse_args()
-    # No subparsers here — derive the mode the dispatch below will take, in
-    # dispatch order, so the log's subcommand field stays meaningful.
+    # No subparsers here — derive the REQUESTED mode, tested in dispatch
+    # order, so the log's subcommand field stays meaningful. On error paths
+    # (e.g. no project given) the logged mode is what was asked for, not the
+    # help-and-exit branch actually taken; outcome=error carries the rest.
     if args.list_backups:
         mode = "list-backups"
     elif args.restore:
